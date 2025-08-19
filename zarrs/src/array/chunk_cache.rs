@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use rayon_iter_concurrent_limit::iter_concurrent_limit;
 use unsafe_cell_slice::UnsafeCellSlice;
 use zarrs_metadata::DataTypeSize;
 use zarrs_storage::ReadableStorageTraits;
@@ -30,7 +28,7 @@ pub type ChunkCacheTypeDecoded = Arc<ArrayBytes<'static>>;
 pub type ChunkCacheTypePartialDecoder = Arc<dyn ArrayPartialDecoderTraits>;
 
 /// A chunk type ([`ChunkCacheTypeEncoded`], [`ChunkCacheTypeDecoded`], or [`ChunkCacheTypePartialDecoder`]).
-pub trait ChunkCacheType: Send + Sync + Clone + 'static {
+pub trait ChunkCacheType: Clone + 'static {
     /// The size of the chunk in bytes.
     fn size(&self) -> usize;
 }
@@ -54,7 +52,7 @@ impl ChunkCacheType for ChunkCacheTypePartialDecoder {
 }
 
 /// Traits for a chunk cache.
-pub trait ChunkCache: Send + Sync {
+pub trait ChunkCache {
     /// Return the array associated with the chunk cache.
     fn array(&self) -> Arc<Array<dyn ReadableStorageTraits>>;
 
@@ -214,7 +212,7 @@ pub trait ChunkCache: Send + Sync {
                 // Retrieve chunks
                 let indices = chunks.indices();
                 let chunk_bytes_and_subsets =
-                    iter_concurrent_limit!(chunk_concurrent_limit, indices, map, |chunk_indices| {
+                    indices.into_iter().map(|chunk_indices| {
                         let chunk_subset = array.chunk_subset(&chunk_indices)?;
                         self.retrieve_chunk(&chunk_indices, &options)
                             .map(|bytes| (bytes, chunk_subset))
@@ -282,12 +280,9 @@ pub trait ChunkCache: Send + Sync {
                                     .map_err(CodecError::from)?;
                                 Ok::<_, ArrayError>(())
                             };
-                            iter_concurrent_limit!(
-                                chunk_concurrent_limit,
-                                chunk_bytes_and_subsets,
-                                try_for_each,
-                                update_output
-                            )?;
+                            chunk_bytes_and_subsets
+                                .into_iter()
+                                .try_for_each(update_output)?;
                         }
                         unsafe { output.set_len(size_output) };
                         Ok(ArrayBytes::from(output).into())

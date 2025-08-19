@@ -81,7 +81,7 @@ impl CodecTraits for ZstdCodec {
     }
 }
 
-#[cfg_attr(feature = "async", async_trait::async_trait)]
+#[cfg_attr(feature = "async", async_trait::async_trait(?Send))]
 impl BytesToBytesCodecTraits for ZstdCodec {
     fn into_dyn(self: Arc<Self>) -> Arc<dyn BytesToBytesCodecTraits> {
         self as Arc<dyn BytesToBytesCodecTraits>

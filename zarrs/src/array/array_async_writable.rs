@@ -86,7 +86,7 @@ impl<TStorage: ?Sized + AsyncWritableStorageTraits + 'static> Array<TStorage> {
 
     /// Async variant of [`store_chunk_elements`](Array::store_chunk_elements).
     #[allow(clippy::missing_errors_doc)]
-    pub async fn async_store_chunk_elements<T: Element + Send + Sync>(
+    pub async fn async_store_chunk_elements<T: Element >(
         &self,
         chunk_indices: &[u64],
         chunk_elements: &[T],
@@ -98,7 +98,7 @@ impl<TStorage: ?Sized + AsyncWritableStorageTraits + 'static> Array<TStorage> {
     #[cfg(feature = "ndarray")]
     /// Async variant of [`store_chunk_ndarray`](Array::store_chunk_ndarray).
     #[allow(clippy::missing_errors_doc)]
-    pub async fn async_store_chunk_ndarray<T: Element + Send + Sync, D: ndarray::Dimension>(
+    pub async fn async_store_chunk_ndarray<T: Element , D: ndarray::Dimension>(
         &self,
         chunk_indices: &[u64],
         chunk_array: impl Into<ndarray::Array<T, D>> + Send,
@@ -121,7 +121,7 @@ impl<TStorage: ?Sized + AsyncWritableStorageTraits + 'static> Array<TStorage> {
 
     /// Async variant of [`store_chunks_elements`](Array::store_chunks_elements).
     #[allow(clippy::missing_errors_doc)]
-    pub async fn async_store_chunks_elements<T: Element + Send + Sync>(
+    pub async fn async_store_chunks_elements<T: Element >(
         &self,
         chunks: &ArraySubset,
         chunks_elements: &[T],
@@ -133,7 +133,7 @@ impl<TStorage: ?Sized + AsyncWritableStorageTraits + 'static> Array<TStorage> {
     #[cfg(feature = "ndarray")]
     /// Async variant of [`store_chunks_ndarray`](Array::store_chunks_ndarray).
     #[allow(clippy::missing_errors_doc)]
-    pub async fn async_store_chunks_ndarray<T: Element + Send + Sync, D: ndarray::Dimension>(
+    pub async fn async_store_chunks_ndarray<T: Element , D: ndarray::Dimension>(
         &self,
         chunks: &ArraySubset,
         chunks_array: impl Into<ndarray::Array<T, D>> + Send,
@@ -280,7 +280,7 @@ impl<TStorage: ?Sized + AsyncWritableStorageTraits + 'static> Array<TStorage> {
 
     /// Async variant of [`store_chunk_elements_opt`](Array::store_chunk_elements_opt).
     #[allow(clippy::missing_errors_doc)]
-    pub async fn async_store_chunk_elements_opt<T: Element + Send + Sync>(
+    pub async fn async_store_chunk_elements_opt<T: Element >(
         &self,
         chunk_indices: &[u64],
         chunk_elements: &[T],
@@ -294,7 +294,7 @@ impl<TStorage: ?Sized + AsyncWritableStorageTraits + 'static> Array<TStorage> {
     #[cfg(feature = "ndarray")]
     /// Async variant of [`store_chunk_ndarray_opt`](Array::store_chunk_ndarray_opt).
     #[allow(clippy::missing_errors_doc)]
-    pub async fn async_store_chunk_ndarray_opt<T: Element + Send + Sync, D: ndarray::Dimension>(
+    pub async fn async_store_chunk_ndarray_opt<T: Element , D: ndarray::Dimension>(
         &self,
         chunk_indices: &[u64],
         chunk_array: impl Into<ndarray::Array<T, D>> + Send,
@@ -378,7 +378,7 @@ impl<TStorage: ?Sized + AsyncWritableStorageTraits + 'static> Array<TStorage> {
 
     /// Async variant of [`store_chunks_elements_opt`](Array::store_chunks_elements_opt).
     #[allow(clippy::missing_errors_doc)]
-    pub async fn async_store_chunks_elements_opt<T: Element + Send + Sync>(
+    pub async fn async_store_chunks_elements_opt<T: Element >(
         &self,
         chunks: &ArraySubset,
         chunks_elements: &[T],
@@ -392,7 +392,7 @@ impl<TStorage: ?Sized + AsyncWritableStorageTraits + 'static> Array<TStorage> {
     #[cfg(feature = "ndarray")]
     /// Async variant of [`store_chunks_ndarray_opt`](Array::store_chunks_ndarray_opt).
     #[allow(clippy::missing_errors_doc)]
-    pub async fn async_store_chunks_ndarray_opt<T: Element + Send + Sync, D: ndarray::Dimension>(
+    pub async fn async_store_chunks_ndarray_opt<T: Element , D: ndarray::Dimension>(
         &self,
         chunks: &ArraySubset,
         chunks_array: impl Into<ndarray::Array<T, D>> + Send,

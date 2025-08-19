@@ -198,7 +198,7 @@ impl AsyncArrayShardedReadableExtCache {
 ///s
 /// Sharding indexes are cached in a [`AsyncArrayShardedReadableExtCache`] enabling faster retrieval.
 // TODO: Add default methods? Or change to options: Option<&CodecOptions>? Should really do this for array (breaking)...
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 pub trait AsyncArrayShardedReadableExt<TStorage: ?Sized + AsyncReadableStorageTraits + 'static>:
     private::Sealed
 {
@@ -239,7 +239,7 @@ pub trait AsyncArrayShardedReadableExt<TStorage: ?Sized + AsyncReadableStorageTr
     ///
     /// See [`Array::retrieve_chunk_elements_opt`].
     #[allow(clippy::missing_errors_doc)]
-    async fn async_retrieve_inner_chunk_elements_opt<T: ElementOwned + Send + Sync>(
+    async fn async_retrieve_inner_chunk_elements_opt<T: ElementOwned >(
         &self,
         cache: &AsyncArrayShardedReadableExtCache,
         inner_chunk_indices: &[u64],
@@ -251,7 +251,7 @@ pub trait AsyncArrayShardedReadableExt<TStorage: ?Sized + AsyncReadableStorageTr
     ///
     /// See [`Array::retrieve_chunk_ndarray_opt`].
     #[allow(clippy::missing_errors_doc)]
-    async fn async_retrieve_inner_chunk_ndarray_opt<T: ElementOwned + Send + Sync>(
+    async fn async_retrieve_inner_chunk_ndarray_opt<T: ElementOwned >(
         &self,
         cache: &AsyncArrayShardedReadableExtCache,
         inner_chunk_indices: &[u64],
@@ -273,7 +273,7 @@ pub trait AsyncArrayShardedReadableExt<TStorage: ?Sized + AsyncReadableStorageTr
     ///
     /// See [`Array::retrieve_chunks_elements_opt`].
     #[allow(clippy::missing_errors_doc)]
-    async fn async_retrieve_inner_chunks_elements_opt<T: ElementOwned + Send + Sync>(
+    async fn async_retrieve_inner_chunks_elements_opt<T: ElementOwned >(
         &self,
         cache: &AsyncArrayShardedReadableExtCache,
         inner_chunks: &ArraySubset,
@@ -285,7 +285,7 @@ pub trait AsyncArrayShardedReadableExt<TStorage: ?Sized + AsyncReadableStorageTr
     /// See [`Array::retrieve_chunks_ndarray_opt`].
     #[cfg(feature = "ndarray")]
     #[allow(clippy::missing_errors_doc)]
-    async fn async_retrieve_inner_chunks_ndarray_opt<T: ElementOwned + Send + Sync>(
+    async fn async_retrieve_inner_chunks_ndarray_opt<T: ElementOwned >(
         &self,
         cache: &AsyncArrayShardedReadableExtCache,
         inner_chunks: &ArraySubset,
@@ -307,7 +307,7 @@ pub trait AsyncArrayShardedReadableExt<TStorage: ?Sized + AsyncReadableStorageTr
     ///
     /// See [`Array::retrieve_array_subset_elements_opt`].
     #[allow(clippy::missing_errors_doc)]
-    async fn async_retrieve_array_subset_elements_sharded_opt<T: ElementOwned + Send + Sync>(
+    async fn async_retrieve_array_subset_elements_sharded_opt<T: ElementOwned >(
         &self,
         cache: &AsyncArrayShardedReadableExtCache,
         array_subset: &ArraySubset,
@@ -319,7 +319,7 @@ pub trait AsyncArrayShardedReadableExt<TStorage: ?Sized + AsyncReadableStorageTr
     ///
     /// See [`Array::retrieve_array_subset_ndarray_opt`].
     #[allow(clippy::missing_errors_doc)]
-    async fn async_retrieve_array_subset_ndarray_sharded_opt<T: ElementOwned + Send + Sync>(
+    async fn async_retrieve_array_subset_ndarray_sharded_opt<T: ElementOwned >(
         &self,
         cache: &AsyncArrayShardedReadableExtCache,
         array_subset: &ArraySubset,
@@ -374,7 +374,7 @@ fn inner_chunk_shard_index_and_chunk_index<
     Ok((shard_indices, chunk_indices))
 }
 
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl<TStorage: ?Sized + AsyncReadableStorageTraits + 'static> AsyncArrayShardedReadableExt<TStorage>
     for Array<TStorage>
 {
@@ -391,7 +391,7 @@ impl<TStorage: ?Sized + AsyncReadableStorageTraits + 'static> AsyncArrayShardedR
                 unreachable!("exlusively sharded")
             };
             // TODO: trait upcasting
-            // let partial_decoder: Arc<dyn Any + Send + Sync> = partial_decoder.clone();
+            // let partial_decoder: Arc<dyn Any > = partial_decoder.clone();
             // let partial_decoder = partial_decoder
             //     .downcast::<AsyncShardingPartialDecoder>()
             //     .expect("array is exclusively sharded");
@@ -417,7 +417,7 @@ impl<TStorage: ?Sized + AsyncReadableStorageTraits + 'static> AsyncArrayShardedR
                 unreachable!("exlusively sharded")
             };
             // TODO: trait upcasting
-            // let partial_decoder: Arc<dyn Any + Send + Sync> = partial_decoder.clone();
+            // let partial_decoder: Arc<dyn Any > = partial_decoder.clone();
             // let partial_decoder = partial_decoder
             //     .downcast::<AsyncShardingPartialDecoder>()
             //     .expect("array is exclusively sharded");
@@ -454,7 +454,7 @@ impl<TStorage: ?Sized + AsyncReadableStorageTraits + 'static> AsyncArrayShardedR
         }
     }
 
-    async fn async_retrieve_inner_chunk_elements_opt<T: ElementOwned + Send + Sync>(
+    async fn async_retrieve_inner_chunk_elements_opt<T: ElementOwned >(
         &self,
         cache: &AsyncArrayShardedReadableExtCache,
         inner_chunk_indices: &[u64],
@@ -468,7 +468,7 @@ impl<TStorage: ?Sized + AsyncReadableStorageTraits + 'static> AsyncArrayShardedR
     }
 
     #[cfg(feature = "ndarray")]
-    async fn async_retrieve_inner_chunk_ndarray_opt<T: ElementOwned + Send + Sync>(
+    async fn async_retrieve_inner_chunk_ndarray_opt<T: ElementOwned >(
         &self,
         cache: &AsyncArrayShardedReadableExtCache,
         inner_chunk_indices: &[u64],
@@ -513,7 +513,7 @@ impl<TStorage: ?Sized + AsyncReadableStorageTraits + 'static> AsyncArrayShardedR
         }
     }
 
-    async fn async_retrieve_inner_chunks_elements_opt<T: ElementOwned + Send + Sync>(
+    async fn async_retrieve_inner_chunks_elements_opt<T: ElementOwned >(
         &self,
         cache: &AsyncArrayShardedReadableExtCache,
         inner_chunks: &ArraySubset,
@@ -527,7 +527,7 @@ impl<TStorage: ?Sized + AsyncReadableStorageTraits + 'static> AsyncArrayShardedR
     }
 
     #[cfg(feature = "ndarray")]
-    async fn async_retrieve_inner_chunks_ndarray_opt<T: ElementOwned + Send + Sync>(
+    async fn async_retrieve_inner_chunks_ndarray_opt<T: ElementOwned >(
         &self,
         cache: &AsyncArrayShardedReadableExtCache,
         inner_chunks: &ArraySubset,
@@ -682,7 +682,7 @@ impl<TStorage: ?Sized + AsyncReadableStorageTraits + 'static> AsyncArrayShardedR
         }
     }
 
-    async fn async_retrieve_array_subset_elements_sharded_opt<T: ElementOwned + Send + Sync>(
+    async fn async_retrieve_array_subset_elements_sharded_opt<T: ElementOwned >(
         &self,
         cache: &AsyncArrayShardedReadableExtCache,
         array_subset: &ArraySubset,
@@ -696,7 +696,7 @@ impl<TStorage: ?Sized + AsyncReadableStorageTraits + 'static> AsyncArrayShardedR
     }
 
     #[cfg(feature = "ndarray")]
-    async fn async_retrieve_array_subset_ndarray_sharded_opt<T: ElementOwned + Send + Sync>(
+    async fn async_retrieve_array_subset_ndarray_sharded_opt<T: ElementOwned >(
         &self,
         cache: &AsyncArrayShardedReadableExtCache,
         array_subset: &ArraySubset,

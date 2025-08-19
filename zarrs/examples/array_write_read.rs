@@ -1,6 +1,5 @@
 #![allow(missing_docs)]
 
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use zarrs::storage::{
     storage_adapter::usage_log::UsageLogStorageAdapter, ReadableWritableListableStorage,
 };
@@ -75,7 +74,7 @@ fn array_write_read() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // Write some chunks
-    (0..2).into_par_iter().try_for_each(|i| {
+    (0..2).into_iter().try_for_each(|i| {
         let chunk_indices: Vec<u64> = vec![0, i];
         let chunk_subset = array.chunk_grid().subset(&chunk_indices)?.ok_or_else(|| {
             zarrs::array::ArrayError::InvalidChunkGridIndicesError(chunk_indices.to_vec())

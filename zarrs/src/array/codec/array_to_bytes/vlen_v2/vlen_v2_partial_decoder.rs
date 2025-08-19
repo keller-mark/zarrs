@@ -99,7 +99,7 @@ impl AsyncVlenV2PartialDecoder {
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl AsyncArrayPartialDecoderTraits for AsyncVlenV2PartialDecoder {
     fn data_type(&self) -> &DataType {
         self.decoded_representation.data_type()

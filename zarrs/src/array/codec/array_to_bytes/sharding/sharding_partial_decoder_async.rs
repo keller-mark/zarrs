@@ -100,7 +100,7 @@ impl AsyncShardingPartialDecoder {
     }
 }
 
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl AsyncArrayPartialDecoderTraits for AsyncShardingPartialDecoder {
     fn data_type(&self) -> &DataType {
         self.shard_representation.data_type()
@@ -262,30 +262,25 @@ async fn partial_decode_fixed_array_subset(
     // FIXME: Concurrency limit for futures
 
     if !results.is_empty() {
-        rayon_iter_concurrent_limit::iter_concurrent_limit!(
-            options.concurrent_target(),
-            results,
-            try_for_each,
-            |subset_and_decoded_chunk| {
-                let (chunk_subset_bytes, chunk_subset_overlap): (Vec<u8>, ArraySubset) =
-                    subset_and_decoded_chunk?;
-                let mut output_view = unsafe {
-                    // SAFETY: chunks represent disjoint array subsets
-                    ArrayBytesFixedDisjointView::new(
-                        shard_slice,
-                        data_type_size,
-                        array_subset.shape(),
-                        chunk_subset_overlap
-                            .relative_to(array_subset.start())
-                            .unwrap(),
-                    )?
-                };
-                output_view
-                    .copy_from_slice(&chunk_subset_bytes)
-                    .expect("chunk subset bytes are the correct length");
-                Ok::<_, CodecError>(())
-            }
-        )?;
+        results.into_iter().try_for_each(|subset_and_decoded_chunk| {
+            let (chunk_subset_bytes, chunk_subset_overlap): (Vec<u8>, ArraySubset) =
+                subset_and_decoded_chunk?;
+            let mut output_view = unsafe {
+                // SAFETY: chunks represent disjoint array subsets
+                ArrayBytesFixedDisjointView::new(
+                    shard_slice,
+                    data_type_size,
+                    array_subset.shape(),
+                    chunk_subset_overlap
+                        .relative_to(array_subset.start())
+                        .unwrap(),
+                )?
+            };
+            output_view
+                .copy_from_slice(&chunk_subset_bytes)
+                .expect("chunk subset bytes are the correct length");
+            Ok::<_, CodecError>(())
+        })?;
     }
 
     // Write filled chunks
@@ -301,11 +296,9 @@ async fn partial_decode_fixed_array_subset(
         .collect::<Vec<_>>();
     if !filled_chunks.is_empty() {
         // Write filled chunks
-        rayon_iter_concurrent_limit::iter_concurrent_limit!(
-            options.concurrent_target(),
-            filled_chunks,
-            try_for_each,
-            |chunk_subset: &ArraySubset| {
+        filled_chunks
+            .into_iter()
+            .try_for_each(|chunk_subset: &ArraySubset| {
                 let chunk_subset_overlap = array_subset.overlap(chunk_subset)?;
                 let mut output_view = unsafe {
                     // SAFETY: chunks represent disjoint array subsets
@@ -326,8 +319,7 @@ async fn partial_decode_fixed_array_subset(
                             .as_ne_bytes(),
                     )
                     .map_err(CodecError::from)
-            }
-        )?;
+            })?;
     }
     unsafe { shard.set_len(shard_size) };
     Ok(ArrayBytes::from(shard))

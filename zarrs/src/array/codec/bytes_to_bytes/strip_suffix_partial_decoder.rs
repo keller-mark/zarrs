@@ -89,7 +89,7 @@ impl AsyncStripSuffixPartialDecoder {
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl AsyncBytesPartialDecoderTraits for AsyncStripSuffixPartialDecoder {
     async fn partial_decode(
         &self,

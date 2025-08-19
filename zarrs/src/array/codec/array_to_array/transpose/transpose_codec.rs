@@ -81,7 +81,7 @@ impl CodecTraits for TransposeCodec {
     }
 }
 
-#[cfg_attr(feature = "async", async_trait::async_trait)]
+#[cfg_attr(feature = "async", async_trait::async_trait(?Send))]
 impl ArrayToArrayCodecTraits for TransposeCodec {
     fn into_dyn(self: Arc<Self>) -> Arc<dyn ArrayToArrayCodecTraits> {
         self as Arc<dyn ArrayToArrayCodecTraits>

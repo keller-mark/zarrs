@@ -10,7 +10,7 @@ use super::{
 
 /// Readable storage traits.
 #[auto_impl(Arc)]
-pub trait ReadableStorageTraits: Send + Sync {
+pub trait ReadableStorageTraits {
     /// Retrieve the value (bytes) associated with a given [`StoreKey`].
     ///
     /// Returns [`None`] if the key is not found.
@@ -110,7 +110,7 @@ pub trait ReadableStorageTraits: Send + Sync {
 
 /// Listable storage traits.
 #[auto_impl(Arc)]
-pub trait ListableStorageTraits: Send + Sync {
+pub trait ListableStorageTraits {
     /// Retrieve all [`StoreKeys`] in the store.
     ///
     /// # Errors
@@ -208,7 +208,7 @@ pub fn store_set_partial_values<T: ReadableWritableStorageTraits>(
 
 /// Writable storage traits.
 #[auto_impl(Arc)]
-pub trait WritableStorageTraits: Send + Sync {
+pub trait WritableStorageTraits {
     /// Store bytes at a [`StoreKey`].
     ///
     /// # Errors

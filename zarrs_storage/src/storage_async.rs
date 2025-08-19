@@ -10,9 +10,9 @@ use super::{
 };
 
 /// Async readable storage traits.
-#[cfg_attr(feature = "async", async_trait::async_trait)]
+#[cfg_attr(feature = "async", async_trait::async_trait(?Send))]
 #[auto_impl(Arc)]
-pub trait AsyncReadableStorageTraits: Send + Sync {
+pub trait AsyncReadableStorageTraits {
     /// Retrieve the value (bytes) associated with a given [`StoreKey`].
     ///
     /// Returns [`None`] if the key is not found.
@@ -120,9 +120,9 @@ pub trait AsyncReadableStorageTraits: Send + Sync {
 }
 
 /// Async listable storage traits.
-#[cfg_attr(feature = "async", async_trait::async_trait)]
+#[cfg_attr(feature = "async", async_trait::async_trait(?Send))]
 #[auto_impl(Arc)]
-pub trait AsyncListableStorageTraits: Send + Sync {
+pub trait AsyncListableStorageTraits {
     /// Retrieve all [`StoreKeys`] in the store.
     ///
     /// # Errors
@@ -226,9 +226,9 @@ pub async fn async_store_set_partial_values<T: AsyncReadableWritableStorageTrait
 }
 
 /// Async writable storage traits.
-#[cfg_attr(feature = "async", async_trait::async_trait)]
+#[cfg_attr(feature = "async", async_trait::async_trait(?Send))]
 #[auto_impl(Arc)]
-pub trait AsyncWritableStorageTraits: Send + Sync {
+pub trait AsyncWritableStorageTraits {
     /// Store bytes at a [`StoreKey`].
     ///
     /// # Errors
@@ -273,7 +273,7 @@ pub trait AsyncWritableStorageTraits: Send + Sync {
 }
 
 /// A supertrait of [`AsyncReadableStorageTraits`] and [`AsyncWritableStorageTraits`].
-#[cfg_attr(feature = "async", async_trait::async_trait)]
+#[cfg_attr(feature = "async", async_trait::async_trait(?Send))]
 pub trait AsyncReadableWritableStorageTraits:
     AsyncReadableStorageTraits + AsyncWritableStorageTraits
 {

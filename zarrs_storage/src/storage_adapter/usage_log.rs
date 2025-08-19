@@ -54,7 +54,7 @@ use crate::{
 /// ```
 pub struct UsageLogStorageAdapter<TStorage: ?Sized> {
     storage: Arc<TStorage>,
-    handle: Arc<Mutex<dyn Write + Send + Sync>>,
+    handle: Arc<Mutex<dyn Write >>,
     prefix_func: fn() -> String,
 }
 
@@ -68,7 +68,7 @@ impl<TStorage: ?Sized> UsageLogStorageAdapter<TStorage> {
     /// Create a new usage log storage adapter.
     pub fn new(
         storage: Arc<TStorage>,
-        handle: Arc<Mutex<dyn Write + Send + Sync>>,
+        handle: Arc<Mutex<dyn Write >>,
         prefix_func: fn() -> String,
     ) -> Self {
         Self {
@@ -283,7 +283,7 @@ impl<TStorage: ?Sized + WritableStorageTraits> WritableStorageTraits
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl<TStorage: ?Sized + AsyncReadableStorageTraits> AsyncReadableStorageTraits
     for UsageLogStorageAdapter<TStorage>
 {
@@ -349,7 +349,7 @@ impl<TStorage: ?Sized + AsyncReadableStorageTraits> AsyncReadableStorageTraits
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl<TStorage: ?Sized + AsyncListableStorageTraits> AsyncListableStorageTraits
     for UsageLogStorageAdapter<TStorage>
 {
@@ -417,7 +417,7 @@ impl<TStorage: ?Sized + AsyncListableStorageTraits> AsyncListableStorageTraits
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl<TStorage: ?Sized + AsyncWritableStorageTraits> AsyncWritableStorageTraits
     for UsageLogStorageAdapter<TStorage>
 {

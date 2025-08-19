@@ -10,7 +10,6 @@ use zarrs::{
 use zarrs_metadata::v3::MetadataV3;
 
 fn rectangular_array_write_read() -> Result<(), Box<dyn std::error::Error>> {
-    use rayon::prelude::{IntoParallelIterator, ParallelIterator};
     use zarrs::{
         array::{codec, DataType, ZARR_NAN_F32},
         array_subset::ArraySubset,
@@ -79,7 +78,7 @@ fn rectangular_array_write_read() -> Result<(), Box<dyn std::error::Error>> {
     array.store_metadata()?;
 
     // Write some chunks (in parallel)
-    (0..4).into_par_iter().try_for_each(|i| {
+    (0..4).into_iter().try_for_each(|i| {
         let chunk_grid = array.chunk_grid();
         let chunk_indices = vec![i, 0];
         if let Some(chunk_shape) = chunk_grid.chunk_shape(&chunk_indices)? {

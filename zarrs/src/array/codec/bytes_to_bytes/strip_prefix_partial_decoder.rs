@@ -79,7 +79,7 @@ impl AsyncStripPrefixPartialDecoder {
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl AsyncBytesPartialDecoderTraits for AsyncStripPrefixPartialDecoder {
     async fn partial_decode(
         &self,

@@ -73,7 +73,7 @@ impl BytesPartialDecoderTraits for BytesPartialDecoderCache {
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl AsyncBytesPartialDecoderTraits for BytesPartialDecoderCache {
     async fn partial_decode(
         &self,

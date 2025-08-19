@@ -1,7 +1,5 @@
 use std::{collections::HashMap, sync::Arc};
 
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use rayon_iter_concurrent_limit::iter_concurrent_limit;
 use unsafe_cell_slice::UnsafeCellSlice;
 use zarrs_metadata::ConfigurationSerialize;
 use zarrs_metadata_ext::codec::sharding::ShardingCodecConfiguration;
@@ -364,7 +362,7 @@ impl<TStorage: ?Sized + ReadableStorageTraits + 'static> ArrayShardedReadableExt
                 unreachable!("exlusively sharded")
             };
             // TODO: trait upcasting
-            // let partial_decoder: Arc<dyn Any + Send + Sync> = partial_decoder.clone();
+            // let partial_decoder: Arc<dyn Any > = partial_decoder.clone();
             // let partial_decoder = partial_decoder
             //     .downcast::<ShardingPartialDecoder>()
             //     .expect("array is exclusively sharded");
@@ -393,7 +391,7 @@ impl<TStorage: ?Sized + ReadableStorageTraits + 'static> ArrayShardedReadableExt
                 unreachable!("exlusively sharded")
             };
             // TODO: trait upcasting
-            // let partial_decoder: Arc<dyn Any + Send + Sync> = partial_decoder.clone();
+            // let partial_decoder: Arc<dyn Any > = partial_decoder.clone();
             // let partial_decoder = partial_decoder
             //     .downcast::<ShardingPartialDecoder>()
             //     .expect("array is exclusively sharded");
@@ -572,13 +570,10 @@ impl<TStorage: ?Sized + ReadableStorageTraits + 'static> ArrayShardedReadableExt
                         };
 
                         let indices = shards.indices();
-                        let chunk_bytes_and_subsets = iter_concurrent_limit!(
-                            chunk_concurrent_limit,
-                            indices,
-                            map,
-                            retrieve_inner_chunk
-                        )
-                        .collect::<Result<Vec<_>, _>>()?;
+                        let chunk_bytes_and_subsets = indices
+                            .into_iter()
+                            .map(retrieve_inner_chunk)
+                            .collect::<Result<Vec<_>, _>>()?;
 
                         Ok(merge_chunks_vlen(
                             chunk_bytes_and_subsets,
@@ -624,12 +619,9 @@ impl<TStorage: ?Sized + ReadableStorageTraits + 'static> ArrayShardedReadableExt
                                 Ok::<_, ArrayError>(())
                             };
                             let indices = shards.indices();
-                            iter_concurrent_limit!(
-                                chunk_concurrent_limit,
-                                indices,
-                                try_for_each,
-                                retrieve_shard_into_slice
-                            )?;
+                            indices
+                                .into_iter()
+                                .try_for_each(retrieve_shard_into_slice)?;
                         }
                         unsafe { output.set_len(size_output) };
                         Ok(ArrayBytes::from(output))

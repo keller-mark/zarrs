@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use zarrs_storage::ReadableStorageTraits;
 
 use crate::{
@@ -332,12 +331,7 @@ impl<TStorage: ?Sized + ReadableWritableStorageTraits + 'static> Array<TStorage>
             };
 
             let indices = chunks.indices();
-            rayon_iter_concurrent_limit::iter_concurrent_limit!(
-                chunk_concurrent_limit,
-                indices,
-                try_for_each,
-                store_chunk
-            )?;
+            indices.into_iter().try_for_each(store_chunk)?;
         }
         Ok(())
     }

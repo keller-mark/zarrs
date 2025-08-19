@@ -5,9 +5,6 @@ use std::{
 };
 
 use itertools::Itertools;
-use rayon::iter::{
-    IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
-};
 
 use crate::{
     array::{
@@ -213,7 +210,7 @@ impl ArrayPartialEncoderTraits for ShardingPartialEncoder {
         // Get the byte ranges of the straddling inner chunk indices
         //   Sorting byte ranges may improves store retrieve efficiency in some cases
         let (inner_chunks_indices, byte_ranges): (Vec<_>, Vec<_>) = inner_chunks_indices
-            .into_par_iter()
+            .into_iter()
             .filter_map(|inner_chunk_index| {
                 let offset = shard_index[usize::try_from(inner_chunk_index * 2).unwrap()];
                 let size = shard_index[usize::try_from(inner_chunk_index * 2 + 1).unwrap()];
@@ -238,7 +235,7 @@ impl ArrayPartialEncoderTraits for ShardingPartialEncoder {
         let inner_chunks_decoded: HashMap<_, _> =
             if let Some(inner_chunks_encoded) = inner_chunks_encoded {
                 let inner_chunks_encoded = inner_chunks_indices
-                    .into_par_iter()
+                    .into_iter()
                     .zip(inner_chunks_encoded)
                     .map(|(inner_chunk_index, inner_chunk_encoded)| {
                         Ok((
@@ -263,7 +260,7 @@ impl ArrayPartialEncoderTraits for ShardingPartialEncoder {
 
         inner_chunks
             .indices()
-            .into_par_iter()
+            .into_iter()
             .try_for_each(|inner_chunk_indices: Vec<u64>| {
                 // Extract the inner chunk bytes that overlap with the chunk subset
                 let inner_chunk_index =
@@ -317,7 +314,7 @@ impl ArrayPartialEncoderTraits for ShardingPartialEncoder {
 
         // Encode the updated inner chunks
         let updated_inner_chunks = inner_chunks_decoded
-            .into_par_iter()
+            .into_iter()
             .map(|(inner_chunk_index, inner_chunk_decoded)| {
                 if inner_chunk_decoded.is_fill_value(self.inner_chunk_representation.fill_value()) {
                     Ok((inner_chunk_index, None))
@@ -341,7 +338,7 @@ impl ArrayPartialEncoderTraits for ShardingPartialEncoder {
             shard_index[usize::try_from(inner_chunk_index * 2).unwrap()] = u64::MAX;
             shard_index[usize::try_from(inner_chunk_index * 2 + 1).unwrap()] = u64::MAX;
         }
-        let max_data_offset = if shard_index.par_iter().all(|&x| x == u64::MAX) {
+        let max_data_offset = if shard_index.iter().all(|&x| x == u64::MAX) {
             self.output_handle.erase()?;
             0
         } else {
@@ -374,7 +371,7 @@ impl ArrayPartialEncoderTraits for ShardingPartialEncoder {
             }
         }
 
-        if shard_index.par_iter().all(|&x| x == u64::MAX) {
+        if shard_index.iter().all(|&x| x == u64::MAX) {
             // Erase the shard if all chunks are empty
             self.output_handle.erase()?;
         } else {

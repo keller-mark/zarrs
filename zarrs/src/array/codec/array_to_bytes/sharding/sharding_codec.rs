@@ -147,7 +147,7 @@ impl ArrayCodecTraits for ShardingCodec {
     }
 }
 
-#[cfg_attr(feature = "async", async_trait::async_trait)]
+#[cfg_attr(feature = "async", async_trait::async_trait(?Send))]
 impl ArrayToBytesCodecTraits for ShardingCodec {
     fn into_dyn(self: Arc<Self>) -> Arc<dyn ArrayToBytesCodecTraits> {
         self as Arc<dyn ArrayToBytesCodecTraits>
@@ -255,13 +255,10 @@ impl ArrayToBytesCodecTraits for ShardingCodec {
                 };
 
                 // Decode the inner chunks
-                let chunk_bytes_and_subsets = rayon_iter_concurrent_limit::iter_concurrent_limit!(
-                    shard_concurrent_limit,
-                    (0..num_chunks),
-                    map,
-                    decode_inner_chunk
-                )
-                .collect::<Result<Vec<_>, _>>()?;
+                let chunk_bytes_and_subsets = (0..num_chunks)
+                    .into_iter()
+                    .map(decode_inner_chunk)
+                    .collect::<Result<Vec<_>, _>>()?;
 
                 // Convert into an array
                 merge_chunks_vlen(chunk_bytes_and_subsets, &shard_representation.shape_u64())
@@ -319,12 +316,9 @@ impl ArrayToBytesCodecTraits for ShardingCodec {
                         Ok::<_, CodecError>(())
                     };
 
-                    rayon_iter_concurrent_limit::iter_concurrent_limit!(
-                        shard_concurrent_limit,
-                        (0..num_chunks),
-                        try_for_each,
-                        decode_chunk
-                    )?;
+                    (0..num_chunks)
+                        .into_iter()
+                        .try_for_each(decode_chunk)?;
                 }
                 unsafe { decoded_shard.set_len(decoded_shard.capacity()) };
                 Ok(ArrayBytes::from(decoded_shard))
@@ -413,12 +407,9 @@ impl ArrayToBytesCodecTraits for ShardingCodec {
             Ok::<_, CodecError>(())
         };
 
-        rayon_iter_concurrent_limit::iter_concurrent_limit!(
-            shard_concurrent_limit,
-            (0..num_chunks),
-            try_for_each,
-            decode_chunk
-        )?;
+        (0..num_chunks)
+            .into_iter()
+            .try_for_each(decode_chunk)?;
 
         Ok(())
     }
@@ -621,11 +612,9 @@ impl ShardingCodec {
                 .iter()
                 .map(|i| usize::try_from(i.get()).unwrap())
                 .product::<usize>();
-            rayon_iter_concurrent_limit::iter_concurrent_limit!(
-                shard_concurrent_limit,
-                (0..n_chunks),
-                try_for_each,
-                |chunk_index: usize| {
+            (0..n_chunks)
+                .into_iter()
+                .try_for_each(|chunk_index: usize| {
                     let chunk_subset = self
                         .chunk_index_to_subset(chunk_index as u64, chunks_per_shard.as_slice())
                         .expect("inbounds chunk");
@@ -771,12 +760,9 @@ impl ShardingCodec {
         };
 
         let encoded_chunks: Vec<(usize, Vec<u8>)> =
-            rayon_iter_concurrent_limit::iter_concurrent_limit!(
-                shard_concurrent_limit,
-                (0..n_chunks).into_par_iter(),
-                filter_map,
-                encode_chunk
-            )
+            (0..n_chunks)
+            .into_iter()
+            .filter_map(encode_chunk)
             .collect::<Result<Vec<_>, _>>()?;
 
         // Allocate the shard
@@ -798,11 +784,9 @@ impl ShardingCodec {
         if !encoded_chunks.is_empty() {
             let shard_slice = UnsafeCellSlice::new_from_vec_with_spare_capacity(&mut shard);
             let shard_index_slice = UnsafeCellSlice::new(&mut shard_index);
-            rayon_iter_concurrent_limit::iter_concurrent_limit!(
-                options.concurrent_target(),
-                encoded_chunks,
-                for_each,
-                |(chunk_index, chunk_encoded): (usize, Vec<u8>)| {
+            encoded_chunks
+                .into_iter()
+                .for_each(|(chunk_index, chunk_encoded): (usize, Vec<u8>)| {
                     let chunk_offset = encoded_shard_offset
                         .fetch_add(chunk_encoded.len(), std::sync::atomic::Ordering::Relaxed);
                     unsafe {

@@ -132,7 +132,7 @@ impl AsyncArrayToBytesPartialDecoderDefault {
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl AsyncArrayPartialDecoderTraits for AsyncArrayToBytesPartialDecoderDefault {
     fn data_type(&self) -> &super::DataType {
         self.decoded_representation.data_type()

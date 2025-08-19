@@ -278,8 +278,6 @@ unsafe impl ChunkGridTraits for RegularBoundedChunkGrid {
 
 #[cfg(test)]
 mod tests {
-    use rayon::iter::ParallelIterator;
-
     use crate::array_subset::ArraySubset;
 
     use super::*;

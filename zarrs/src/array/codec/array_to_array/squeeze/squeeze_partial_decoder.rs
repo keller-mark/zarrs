@@ -100,7 +100,7 @@ impl AsyncSqueezePartialDecoder {
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl AsyncArrayPartialDecoderTraits for AsyncSqueezePartialDecoder {
     fn data_type(&self) -> &DataType {
         self.decoded_representation.data_type()

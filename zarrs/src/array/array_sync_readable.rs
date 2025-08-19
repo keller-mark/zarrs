@@ -1,7 +1,5 @@
 use std::{borrow::Cow, sync::Arc};
 
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use rayon_iter_concurrent_limit::iter_concurrent_limit;
 use unsafe_cell_slice::UnsafeCellSlice;
 
 use crate::{
@@ -235,13 +233,10 @@ impl<TStorage: ?Sized + ReadableStorageTraits + 'static> Array<TStorage> {
         };
 
         let indices = chunks.indices();
-        iter_concurrent_limit!(
-            options.concurrent_target(),
-            indices,
-            map,
-            retrieve_encoded_chunk
-        )
-        .collect()
+        indices
+            .into_iter()
+            .map(retrieve_encoded_chunk)
+            .collect()
     }
 
     /// Read and decode the chunks at `chunks` into their bytes.
@@ -690,13 +685,10 @@ impl<TStorage: ?Sized + ReadableStorageTraits + 'static> Array<TStorage> {
                             ))
                         };
                         let chunk_indices = chunks.indices();
-                        let chunk_bytes_and_subsets = iter_concurrent_limit!(
-                            chunk_concurrent_limit,
-                            chunk_indices,
-                            map,
-                            retrieve_chunk
-                        )
-                        .collect::<Result<Vec<_>, _>>()?;
+                        let chunk_bytes_and_subsets = chunk_indices
+                            .into_iter()
+                            .map(retrieve_chunk)
+                            .collect::<Result<Vec<_>, _>>()?;
 
                         Ok(merge_chunks_vlen(
                             chunk_bytes_and_subsets,
@@ -747,12 +739,7 @@ impl<TStorage: ?Sized + ReadableStorageTraits + 'static> Array<TStorage> {
                                 Ok::<_, ArrayError>(())
                             };
                             let indices = chunks.indices();
-                            iter_concurrent_limit!(
-                                chunk_concurrent_limit,
-                                indices,
-                                try_for_each,
-                                retrieve_chunk
-                            )?;
+                            indices.into_iter().try_for_each(retrieve_chunk)?;
                         }
                         unsafe { output.set_len(size_output) };
                         Ok(ArrayBytes::from(output))

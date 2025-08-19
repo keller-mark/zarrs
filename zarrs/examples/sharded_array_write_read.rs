@@ -19,7 +19,6 @@ fn sharded_array_write_read() -> Result<(), Box<dyn std::error::Error>> {
         storage::store,
     };
 
-    use rayon::prelude::{IntoParallelIterator, ParallelIterator};
     use std::sync::Arc;
 
     // Create a store
@@ -90,7 +89,7 @@ fn sharded_array_write_read() -> Result<(), Box<dyn std::error::Error>> {
     let options = CodecOptions::default();
 
     // Write some shards (in parallel)
-    (0..2).into_par_iter().try_for_each(|s| {
+    (0..2).into_iter().try_for_each(|s| {
         let chunk_grid = array.chunk_grid();
         let chunk_indices = vec![s, 0];
         if let Some(chunk_shape) = chunk_grid.chunk_shape(&chunk_indices)? {

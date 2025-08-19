@@ -21,7 +21,7 @@ use crate::{
 /// These methods are not invoked for variable-size data types, and can be pass-through for a fixed-size data types that use an explicitly fixed endianness or where endianness is not applicable.
 ///
 /// A custom data type must also directly handle conversion of fill value metadata to fill value bytes, and vice versa.
-pub trait DataTypeExtension: Debug + Send + Sync {
+pub trait DataTypeExtension: Debug  {
     /// The name of the data type.
     fn name(&self) -> String;
 

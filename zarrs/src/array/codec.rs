@@ -254,7 +254,7 @@ impl Codec {
 }
 
 /// Codec traits.
-pub trait CodecTraits: Send + Sync {
+pub trait CodecTraits {
     /// Unique identifier for the codec.
     fn identifier(&self) -> &str;
 
@@ -317,7 +317,7 @@ pub trait ArrayCodecTraits: CodecTraits {
 }
 
 /// Partial bytes decoder traits.
-pub trait BytesPartialDecoderTraits: Any + Send + Sync {
+pub trait BytesPartialDecoderTraits: Any  {
     /// Returns the size of chunk bytes held by the partial decoder.
     fn size(&self) -> usize;
 
@@ -366,8 +366,8 @@ pub trait BytesPartialDecoderTraits: Any + Send + Sync {
 
 #[cfg(feature = "async")]
 /// Asynchronous partial bytes decoder traits.
-#[async_trait::async_trait]
-pub trait AsyncBytesPartialDecoderTraits: Any + Send + Sync {
+#[async_trait::async_trait(?Send)]
+pub trait AsyncBytesPartialDecoderTraits: Any  {
     /// Partially decode bytes.
     ///
     /// Returns [`None`] if partial decoding of the input handle returns [`None`].
@@ -412,7 +412,7 @@ pub trait AsyncBytesPartialDecoderTraits: Any + Send + Sync {
 }
 
 /// Partial array decoder traits.
-pub trait ArrayPartialDecoderTraits: Any + Send + Sync {
+pub trait ArrayPartialDecoderTraits: Any  {
     /// Return the data type of the partial decoder.
     fn data_type(&self) -> &DataType;
 
@@ -466,7 +466,7 @@ pub trait ArrayPartialDecoderTraits: Any + Send + Sync {
 }
 
 /// Partial array encoder traits.
-pub trait ArrayPartialEncoderTraits: Any + Send + Sync {
+pub trait ArrayPartialEncoderTraits: Any  {
     /// Erase the chunk.
     ///
     /// # Errors
@@ -487,8 +487,8 @@ pub trait ArrayPartialEncoderTraits: Any + Send + Sync {
 
 #[cfg(feature = "async")]
 /// Asynchronous partial array encoder traits.
-#[async_trait::async_trait]
-pub trait AsyncArrayPartialEncoderTraits: Any + Send + Sync {
+#[async_trait::async_trait(?Send)]
+pub trait AsyncArrayPartialEncoderTraits: Any  {
     /// Erase the chunk.
     ///
     /// # Errors
@@ -508,7 +508,7 @@ pub trait AsyncArrayPartialEncoderTraits: Any + Send + Sync {
 }
 
 /// Partial bytes encoder traits.
-pub trait BytesPartialEncoderTraits: Any + Send + Sync {
+pub trait BytesPartialEncoderTraits: Any  {
     /// Erase the chunk.
     ///
     /// # Errors
@@ -528,8 +528,8 @@ pub trait BytesPartialEncoderTraits: Any + Send + Sync {
 
 #[cfg(feature = "async")]
 /// Asynhronous partial bytes encoder traits.
-#[async_trait::async_trait]
-pub trait AsyncBytesPartialEncoderTraits: Any + Send + Sync {
+#[async_trait::async_trait(?Send)]
+pub trait AsyncBytesPartialEncoderTraits: Any  {
     /// Erase the chunk.
     ///
     /// # Errors
@@ -549,8 +549,8 @@ pub trait AsyncBytesPartialEncoderTraits: Any + Send + Sync {
 
 #[cfg(feature = "async")]
 /// Asynchronous partial array decoder traits.
-#[async_trait::async_trait]
-pub trait AsyncArrayPartialDecoderTraits: Any + Send + Sync {
+#[async_trait::async_trait(?Send)]
+pub trait AsyncArrayPartialDecoderTraits: Any  {
     /// Return the data type of the partial decoder.
     fn data_type(&self) -> &DataType;
 
@@ -640,7 +640,7 @@ impl AsyncStoragePartialDecoder {
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl AsyncBytesPartialDecoderTraits for AsyncStoragePartialDecoder {
     async fn partial_decode(
         &self,
@@ -692,7 +692,7 @@ impl BytesPartialEncoderTraits for StoragePartialEncoder {
 }
 
 /// Traits for array to array codecs.
-#[cfg_attr(feature = "async", async_trait::async_trait)]
+#[cfg_attr(feature = "async", async_trait::async_trait(?Send))]
 pub trait ArrayToArrayCodecTraits: ArrayCodecTraits + core::fmt::Debug {
     /// Return a dynamic version of the codec.
     fn into_dyn(self: Arc<Self>) -> Arc<dyn ArrayToArrayCodecTraits>;
@@ -895,7 +895,7 @@ pub trait ArrayToArrayCodecTraits: ArrayCodecTraits + core::fmt::Debug {
 }
 
 /// Traits for array to bytes codecs.
-#[cfg_attr(feature = "async", async_trait::async_trait)]
+#[cfg_attr(feature = "async", async_trait::async_trait(?Send))]
 pub trait ArrayToBytesCodecTraits: ArrayCodecTraits + core::fmt::Debug {
     /// Return a dynamic version of the codec.
     fn into_dyn(self: Arc<Self>) -> Arc<dyn ArrayToBytesCodecTraits>;
@@ -1052,7 +1052,7 @@ pub trait ArrayToBytesCodecTraits: ArrayCodecTraits + core::fmt::Debug {
 }
 
 /// Traits for bytes to bytes codecs.
-#[cfg_attr(feature = "async", async_trait::async_trait)]
+#[cfg_attr(feature = "async", async_trait::async_trait(?Send))]
 pub trait BytesToBytesCodecTraits: CodecTraits + core::fmt::Debug {
     /// Return a dynamic version of the codec.
     fn into_dyn(self: Arc<Self>) -> Arc<dyn BytesToBytesCodecTraits>;
@@ -1182,7 +1182,7 @@ pub trait BytesToBytesCodecTraits: CodecTraits + core::fmt::Debug {
 
 impl<T> BytesPartialDecoderTraits for T
 where
-    T: AsRef<[u8]> + Send + Sync + 'static,
+    T: AsRef<[u8]>  + 'static,
 {
     fn size(&self) -> usize {
         self.as_ref().len()
@@ -1203,10 +1203,10 @@ where
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl<T> AsyncBytesPartialDecoderTraits for T
 where
-    T: AsRef<[u8]> + Send + Sync + 'static,
+    T: AsRef<[u8]>  + 'static,
 {
     async fn partial_decode(
         &self,

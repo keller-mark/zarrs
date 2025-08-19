@@ -1,8 +1,5 @@
 use std::sync::Arc;
 
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use rayon_iter_concurrent_limit::iter_concurrent_limit;
-
 use crate::{
     array::ArrayBytes,
     array_subset::ArraySubset,
@@ -247,7 +244,7 @@ impl<TStorage: ?Sized + WritableStorageTraits + 'static> Array<TStorage> {
         let erase_chunk =
             |chunk_indices: Vec<u64>| storage_transformer.erase(&self.chunk_key(&chunk_indices));
 
-        chunks.indices().into_par_iter().try_for_each(erase_chunk)
+        chunks.indices().into_iter().try_for_each(erase_chunk)
     }
 
     /////////////////////////////////////////////////////////////////////////////
@@ -388,7 +385,9 @@ impl<TStorage: ?Sized + WritableStorageTraits + 'static> Array<TStorage> {
                 };
 
                 let indices = chunks.indices();
-                iter_concurrent_limit!(chunk_concurrent_limit, indices, try_for_each, store_chunk)?;
+                indices
+                    .into_iter()
+                    .try_for_each(store_chunk)?;
             }
         }
 

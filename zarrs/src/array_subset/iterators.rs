@@ -59,8 +59,8 @@ mod tests {
         assert_eq!((&indices).par_iter().collect::<Vec<_>>(), expected);
         assert_eq!(indices.par_iter().collect::<Vec<_>>(), expected);
         assert_eq!(indices.clone().into_iter().collect::<Vec<_>>(), expected);
-        assert_eq!((&indices).into_par_iter().collect::<Vec<_>>(), expected);
-        assert_eq!(indices.into_par_iter().collect::<Vec<_>>(), expected);
+        assert_eq!((&indices).into_iter().collect::<Vec<_>>(), expected);
+        assert_eq!(indices.into_iter().collect::<Vec<_>>(), expected);
     }
 
     #[test]
@@ -85,7 +85,7 @@ mod tests {
         assert_eq!(indices.iter().collect::<Vec<_>>(), expected);
         // assert_eq!(indices.par_iter().collect::<Vec<_>>(), expected);
         assert_eq!(indices.clone().into_iter().collect::<Vec<_>>(), expected);
-        // assert_eq!(indices.into_par_iter().collect::<Vec<_>>(), expected);
+        // assert_eq!(indices.into_iter().collect::<Vec<_>>(), expected);
     }
 
     #[test]
@@ -118,7 +118,7 @@ mod tests {
         assert_eq!(indices.iter().collect::<Vec<_>>(), expected);
         // assert_eq!(indices.par_iter().collect::<Vec<_>>(), expected);
         assert_eq!(indices.clone().into_iter().collect::<Vec<_>>(), expected);
-        // assert_eq!(indices.into_par_iter().collect::<Vec<_>>(), expected);
+        // assert_eq!(indices.into_iter().collect::<Vec<_>>(), expected);
     }
 
     #[test]
@@ -130,7 +130,7 @@ mod tests {
         assert_eq!(indices.iter().collect::<Vec<_>>(), expected);
         // assert_eq!(indices.par_iter().collect::<Vec<_>>(), expected);
         assert_eq!(indices.clone().into_iter().collect::<Vec<_>>(), expected);
-        // assert_eq!(indices.into_par_iter().collect::<Vec<_>>(), expected);
+        // assert_eq!(indices.into_iter().collect::<Vec<_>>(), expected);
     }
 
     #[test]
@@ -156,6 +156,6 @@ mod tests {
         assert_eq!(indices.iter().collect::<Vec<_>>(), expected);
         // assert_eq!(indices.par_iter().collect::<Vec<_>>(), expected);
         assert_eq!(indices.clone().into_iter().collect::<Vec<_>>(), expected);
-        // assert_eq!(indices.into_par_iter().collect::<Vec<_>>(), expected);
+        // assert_eq!(indices.into_iter().collect::<Vec<_>>(), expected);
     }
 }

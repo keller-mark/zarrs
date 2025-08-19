@@ -85,7 +85,7 @@ impl<T: object_store::ObjectStore> AsyncObjectStore<T> {
     }
 }
 
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl<T: object_store::ObjectStore> AsyncReadableStorageTraits for AsyncObjectStore<T> {
     async fn get(&self, key: &StoreKey) -> Result<MaybeAsyncBytes, StorageError> {
         let get = handle_result_notfound(self.object_store.get(&key_to_path(key)).await)?;
@@ -148,7 +148,7 @@ impl<T: object_store::ObjectStore> AsyncReadableStorageTraits for AsyncObjectSto
     }
 }
 
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl<T: object_store::ObjectStore> AsyncWritableStorageTraits for AsyncObjectStore<T> {
     async fn set(&self, key: &StoreKey, value: AsyncBytes) -> Result<(), StorageError> {
         handle_result(self.object_store.put(&key_to_path(key), value.into()).await)?;
@@ -184,7 +184,7 @@ impl<T: object_store::ObjectStore> AsyncWritableStorageTraits for AsyncObjectSto
     }
 }
 
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl<T: object_store::ObjectStore> AsyncListableStorageTraits for AsyncObjectStore<T> {
     async fn list(&self) -> Result<StoreKeys, StorageError> {
         let mut list = handle_result(

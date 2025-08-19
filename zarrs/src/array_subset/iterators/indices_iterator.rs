@@ -321,7 +321,7 @@ mod tests {
         assert_eq!(iter.next(), None);
 
         assert_eq!(
-            indices.into_par_iter().map(|v| v[0] + v[1]).sum::<u64>(),
+            indices.into_iter().map(|v| v[0] + v[1]).sum::<u64>(),
             22
         );
 

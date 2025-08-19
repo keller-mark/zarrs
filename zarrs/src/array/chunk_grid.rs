@@ -97,7 +97,7 @@ impl ChunkGrid {
 /// # Safety
 /// - Chunks must be disjoint.
 /// - Methods must check the dimensionality of arguments and returned indices/shapes/subsets must match the chunk grid dimensionality.
-pub unsafe trait ChunkGridTraits: core::fmt::Debug + Send + Sync {
+pub unsafe trait ChunkGridTraits: core::fmt::Debug  {
     /// Create the metadata for the chunk grid.
     fn create_metadata(&self) -> MetadataV3;
 

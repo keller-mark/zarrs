@@ -96,7 +96,7 @@ where
 }
 
 /// Chunk key encoding traits.
-pub trait ChunkKeyEncodingTraits: core::fmt::Debug + Send + Sync {
+pub trait ChunkKeyEncodingTraits: core::fmt::Debug  {
     /// Create the metadata of this chunk key encoding.
     fn create_metadata(&self) -> MetadataV3;
 

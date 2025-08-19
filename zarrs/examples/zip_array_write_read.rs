@@ -47,7 +47,7 @@ fn write_array_to_storage<TStorage: ReadableWritableStorageTraits + ?Sized + 'st
 
     // Write some chunks (in parallel)
     let _ = (0..2)
-        // .into_par_iter()
+        // .into_iter()
         .try_for_each(|i| {
             let chunk_grid = array.chunk_grid();
             let chunk_indices: Vec<u64> = vec![i, 0];

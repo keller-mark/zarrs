@@ -82,7 +82,7 @@ impl AsyncBloscPartialDecoder {
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl AsyncBytesPartialDecoderTraits for AsyncBloscPartialDecoder {
     async fn partial_decode(
         &self,

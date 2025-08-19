@@ -67,8 +67,8 @@ pub fn try_create_storage_transformer(
 }
 
 /// A storage transformer extension.
-#[cfg_attr(feature = "async", async_trait::async_trait)]
-pub trait StorageTransformerExtension: core::fmt::Debug + Send + Sync {
+#[cfg_attr(feature = "async", async_trait::async_trait(?Send))]
+pub trait StorageTransformerExtension: core::fmt::Debug  {
     /// Create metadata.
     fn create_metadata(&self) -> MetadataV3;
 

@@ -109,7 +109,7 @@ macro_rules! vlen_v2_codec {
             }
         }
 
-        #[cfg_attr(feature = "async", async_trait::async_trait)]
+        #[cfg_attr(feature = "async", async_trait::async_trait(?Send))]
         impl ArrayToBytesCodecTraits for $struct {
             fn into_dyn(self: Arc<Self>) -> Arc<dyn ArrayToBytesCodecTraits> {
                 self as Arc<dyn ArrayToBytesCodecTraits>

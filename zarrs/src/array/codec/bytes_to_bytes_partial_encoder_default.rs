@@ -149,7 +149,7 @@ impl AsyncBytesToBytesPartialEncoderDefault {
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl AsyncBytesPartialEncoderTraits for AsyncBytesToBytesPartialEncoderDefault {
     async fn erase(&self) -> Result<(), super::CodecError> {
         self.output_handle.erase().await

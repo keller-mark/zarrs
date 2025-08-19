@@ -24,7 +24,7 @@ use std::sync::Arc;
 ///         self.0.block_on(future)
 ///     }
 /// }
-pub trait AsyncToSyncBlockOn: Send + Sync {
+pub trait AsyncToSyncBlockOn {
     /// Runs a future to completion.
     fn block_on<F: core::future::Future>(&self, future: F) -> F::Output;
 }

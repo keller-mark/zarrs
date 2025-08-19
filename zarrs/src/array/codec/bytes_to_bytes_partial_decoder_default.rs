@@ -119,7 +119,7 @@ impl AsyncBytesToBytesPartialDecoderDefault {
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl AsyncBytesPartialDecoderTraits for AsyncBytesToBytesPartialDecoderDefault {
     async fn partial_decode(
         &self,

@@ -224,7 +224,6 @@ pub fn chunk_shape_to_array_shape(chunk_shape: &[std::num::NonZeroU64]) -> Array
 /// # use zarrs::array::{Array, ArrayBytes};
 /// # use zarrs::array_subset::ArraySubset;
 /// # use zarrs::array_subset::iterators::Indices;
-/// # use rayon::iter::{IntoParallelIterator, ParallelIterator};
 /// # let store = Arc::new(zarrs_filesystem::FilesystemStore::new("tests/data/array_write_read.zarr")?);
 /// # let array = Array::open(store, "/group/array")?;
 /// // Get an iterator over the chunk indices
@@ -234,7 +233,7 @@ pub fn chunk_shape_to_array_shape(chunk_shape: &[std::num::NonZeroU64]) -> Array
 /// let chunks: Indices = ArraySubset::new_with_shape(chunk_grid_shape.to_vec()).indices();
 ///
 /// // Iterate over chunk indices (in parallel)
-/// chunks.into_par_iter().try_for_each(|chunk_indices: Vec<u64>| {
+/// chunks.into_iter().try_for_each(|chunk_indices: Vec<u64>| {
 ///     // Retrieve the array subset of the chunk within the array bounds
 ///     //   This partially decodes chunks that extend beyond the array end
 ///     let subset: ArraySubset = array.chunk_subset_bounded(&chunk_indices)?;
@@ -1461,7 +1460,7 @@ mod tests {
 
     //     let mut any_not_equal = false;
     //     for j in 1..10 {
-    //         (0..100).into_par_iter().for_each(|i| {
+    //         (0..100).into_iter().for_each(|i| {
     //             let subset = ArraySubset::new_with_ranges(&[i..i + 1, 0..4]);
     //             array.store_array_subset(&subset, vec![j; 4]).unwrap();
     //         });

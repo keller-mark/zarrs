@@ -63,7 +63,7 @@ impl AsyncTestUnboundedPartialDecoder {
 }
 
 #[cfg(feature = "async")]
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 impl AsyncBytesPartialDecoderTraits for AsyncTestUnboundedPartialDecoder {
     async fn partial_decode(
         &self,

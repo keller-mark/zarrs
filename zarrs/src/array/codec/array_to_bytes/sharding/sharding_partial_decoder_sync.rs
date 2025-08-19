@@ -243,12 +243,9 @@ fn partial_decode_fixed_array_subset(
     };
 
     let chunks = shard_chunk_grid.chunks_in_array_subset(array_subset)?;
-    rayon_iter_concurrent_limit::iter_concurrent_limit!(
-        inner_chunk_concurrent_limit,
-        chunks.indices(),
-        try_for_each,
-        decode_inner_chunk_subset_into_slice
-    )?;
+    chunks.indices()
+        .into_iter()
+        .try_for_each(decode_inner_chunk_subset_into_slice)?;
     Ok(ArrayBytes::from(out_array_subset))
 }
 
@@ -324,13 +321,10 @@ fn partial_decode_variable_array_subset(
     };
     // Decode the inner chunk subsets
     let chunks = shard_chunk_grid.chunks_in_array_subset(array_subset)?;
-    let chunk_bytes_and_subsets = rayon_iter_concurrent_limit::iter_concurrent_limit!(
-        inner_chunk_concurrent_limit,
-        chunks.indices(),
-        map,
-        decode_inner_chunk_subset
-    )
-    .collect::<Result<Vec<_>, _>>()?;
+    let chunk_bytes_and_subsets = chunks.indices()
+        .into_iter()
+        .map(decode_inner_chunk_subset)
+        .collect::<Result<Vec<_>, _>>()?;
 
     // Convert into an array
     let out_array_subset = merge_chunks_vlen(chunk_bytes_and_subsets, array_subset.shape())?;

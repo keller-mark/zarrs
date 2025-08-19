@@ -283,8 +283,6 @@ unsafe impl ChunkGridTraits for RegularChunkGrid {
 
 #[cfg(test)]
 mod tests {
-    use rayon::iter::ParallelIterator;
-
     use crate::array::chunk_grid::ChunkGridTraitsIterators;
     use crate::array_subset::ArraySubset;
 
