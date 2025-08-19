@@ -1,14 +1,19 @@
 use std::{
     num::NonZeroUsize,
-    sync::{atomic, atomic::AtomicUsize, Arc, Mutex},
+    cell::{Cell, RefCell},
+    sync::Arc,
 };
 
 use lru::LruCache;
+/*
 use moka::{
     policy::EvictionPolicy,
-    sync::{Cache, CacheBuilder},
 };
-use thread_local::ThreadLocal;
+*/
+use mini_moka::{
+    unsync::{Cache, CacheBuilder},
+};
+
 use zarrs_storage::ReadableStorageTraits;
 
 use crate::{
@@ -29,28 +34,29 @@ type ChunkIndices = ArrayIndices;
 /// A chunk cache with a fixed chunk capacity.
 pub struct ChunkCacheLruChunkLimit<T: ChunkCacheType> {
     array: Arc<Array<dyn ReadableStorageTraits>>,
-    cache: Cache<ChunkIndices, T>,
+    cache: RefCell<Cache<ChunkIndices, T>>,
 }
 
 /// A thread local chunk cache with a fixed chunk capacity per thread.
+/// In a single-threaded, non-Send context, this is implemented with RefCell.
 pub struct ChunkCacheLruChunkLimitThreadLocal<T: ChunkCacheType> {
     array: Arc<Array<dyn ReadableStorageTraits>>,
-    cache: ThreadLocal<Mutex<LruCache<ChunkIndices, T>>>,
-    capacity: u64,
+    cache: RefCell<LruCache<ChunkIndices, T>>,
 }
 
 /// A chunk cache with a fixed size capacity.
 pub struct ChunkCacheLruSizeLimit<T: ChunkCacheType> {
     array: Arc<Array<dyn ReadableStorageTraits>>,
-    cache: Cache<ChunkIndices, T>,
+    cache: RefCell<Cache<ChunkIndices, T>>,
 }
 
 /// A thread local chunk cache with a fixed chunk capacity per thread.
+/// In a single-threaded, non-Send context, this is implemented with RefCell/Cell.
 pub struct ChunkCacheLruSizeLimitThreadLocal<T: ChunkCacheType> {
     array: Arc<Array<dyn ReadableStorageTraits>>,
-    cache: ThreadLocal<Mutex<LruCache<ChunkIndices, T>>>,
+    cache: RefCell<LruCache<ChunkIndices, T>>,
     capacity: usize,
-    size: ThreadLocal<AtomicUsize>,
+    size: Cell<usize>,
 }
 
 /// An LRU (least recently used) encoded chunk cache with a fixed chunk capacity.
@@ -101,10 +107,8 @@ impl<CT: ChunkCacheType> ChunkCacheLruChunkLimit<CT> {
     /// Create a new [`ChunkCacheLruChunkLimit`] with a capacity in chunks of `chunk_capacity`.
     #[must_use]
     pub fn new(array: Arc<Array<dyn ReadableStorageTraits>>, chunk_capacity: u64) -> Self {
-        let cache = CacheBuilder::new(chunk_capacity)
-            .eviction_policy(EvictionPolicy::lru())
-            .build();
-        Self { array, cache }
+        let cache = CacheBuilder::new(chunk_capacity).build();
+        Self { array, cache: RefCell::new(cache) }
     }
 
     // fn get(&self, chunk_indices: &[u64]) -> Option<CT> {
@@ -123,7 +127,14 @@ impl<CT: ChunkCacheType> ChunkCacheLruChunkLimit<CT> {
     where
         F: FnOnce() -> Result<CT, ArrayError>,
     {
-        self.cache.try_get_with(chunk_indices, f)
+        let mut cache = self.cache.borrow_mut();
+        if cache.contains_key(&chunk_indices) {
+            Ok(cache.get(&chunk_indices).unwrap().clone())
+        } else {
+            let value = f()?;
+            cache.insert(chunk_indices, value.clone());
+            Ok(value)
+        }
     }
 }
 
@@ -131,33 +142,25 @@ impl<CT: ChunkCacheType> ChunkCacheLruChunkLimitThreadLocal<CT> {
     /// Create a new [`ChunkCacheLruChunkLimitThreadLocal`] with a capacity in bytes of `capacity`.
     #[must_use]
     pub fn new(array: Arc<Array<dyn ReadableStorageTraits>>, capacity: u64) -> Self {
-        let cache = ThreadLocal::new();
-        Self {
-            array,
-            cache,
-            capacity,
-        }
+        let cap = NonZeroUsize::new(usize::try_from(capacity).unwrap_or(usize::MAX).max(1))
+            .unwrap();
+        let cache = RefCell::new(LruCache::new(cap));
+        Self { array, cache }
     }
 
-    fn cache(&self) -> &Mutex<LruCache<ChunkIndices, CT>> {
-        self.cache.get_or(|| {
-            Mutex::new(LruCache::new(
-                NonZeroUsize::new(usize::try_from(self.capacity).unwrap_or(usize::MAX).max(1))
-                    .unwrap(),
-            ))
-        })
+    fn cache(&self) -> &RefCell<LruCache<ChunkIndices, CT>> {
+        &self.cache
     }
 
     // fn get(&self, chunk_indices: &[u64]) -> Option<CT> {
     //     self.cache()
-    //         .lock()
-    //         .unwrap()
+    //         .borrow_mut()
     //         .get(&chunk_indices.to_vec())
     //         .cloned()
     // }
 
     // fn insert(&self, chunk_indices: ChunkIndices, chunk: CT) {
-    //     self.cache().lock().unwrap().push(chunk_indices, chunk);
+    //     self.cache().borrow_mut().push(chunk_indices, chunk);
     // }
 
     fn try_get_or_insert_with<F>(
@@ -169,8 +172,7 @@ impl<CT: ChunkCacheType> ChunkCacheLruChunkLimitThreadLocal<CT> {
         F: FnOnce() -> Result<CT, ArrayError>,
     {
         self.cache()
-            .lock()
-            .unwrap()
+            .borrow_mut()
             .try_get_or_insert(chunk_indices, f)
             .cloned()
             .map_err(Arc::new)
@@ -182,10 +184,9 @@ impl<CT: ChunkCacheType> ChunkCacheLruSizeLimit<CT> {
     #[must_use]
     pub fn new(array: Arc<Array<dyn ReadableStorageTraits>>, capacity: u64) -> Self {
         let cache = CacheBuilder::new(capacity)
-            .eviction_policy(EvictionPolicy::lru())
             .weigher(|_k, v: &CT| u32::try_from(v.size()).unwrap_or(u32::MAX))
             .build();
-        Self { array, cache }
+        Self { array, cache: RefCell::new(cache) }
     }
 
     // fn get(&self, chunk_indices: &[u64]) -> Option<CT> {
@@ -204,7 +205,14 @@ impl<CT: ChunkCacheType> ChunkCacheLruSizeLimit<CT> {
     where
         F: FnOnce() -> Result<CT, ArrayError>,
     {
-        self.cache.try_get_with(chunk_indices, f)
+        let mut cache = self.cache.borrow_mut();
+        if cache.contains_key(&chunk_indices) {
+            Ok(cache.get(&chunk_indices).unwrap().clone())
+        } else {
+            let value = f()?;
+            cache.insert(chunk_indices, value.clone());
+            Ok(value)
+        }
     }
 }
 
@@ -212,41 +220,43 @@ impl<CT: ChunkCacheType> ChunkCacheLruSizeLimitThreadLocal<CT> {
     /// Create a new [`ChunkCacheLruSizeLimitThreadLocal`] with a capacity in bytes of `capacity`.
     #[must_use]
     pub fn new(array: Arc<Array<dyn ReadableStorageTraits>>, capacity: u64) -> Self {
-        let cache = ThreadLocal::new();
+        let cache = RefCell::new(LruCache::unbounded());
         Self {
             array,
             cache,
             capacity: usize::try_from(capacity).unwrap_or(usize::MAX),
-            size: ThreadLocal::new(),
+            size: Cell::new(0),
         }
     }
 
-    fn cache(&self) -> &Mutex<LruCache<ChunkIndices, CT>> {
-        self.cache.get_or(|| Mutex::new(LruCache::unbounded()))
+    fn cache(&self) -> &RefCell<LruCache<ChunkIndices, CT>> {
+        &self.cache
     }
 
     fn get(&self, chunk_indices: &[u64]) -> Option<CT> {
         self.cache()
-            .lock()
-            .unwrap()
+            .borrow_mut()
             .get(&chunk_indices.to_vec())
             .cloned()
     }
 
     fn insert(&self, chunk_indices: ChunkIndices, chunk: CT) {
-        let size = self.size.get_or_default();
-        let size_old = size.fetch_add(chunk.size(), atomic::Ordering::SeqCst);
-        if size_old + chunk.size() > self.capacity {
-            let old = self.cache().lock().unwrap().pop_lru();
-            if let Some(old) = old {
-                size.fetch_sub(old.1.size(), atomic::Ordering::SeqCst);
+        let new_chunk_size = chunk.size();
+        let mut cache = self.cache().borrow_mut();
+        let mut size = self.size.get();
+
+        if size + new_chunk_size > self.capacity {
+            if let Some((_k, old)) = cache.pop_lru() {
+                size -= old.size();
             }
         }
 
-        let old = self.cache().lock().unwrap().push(chunk_indices, chunk);
-        if let Some(old) = old {
-            size.fetch_sub(old.1.size(), atomic::Ordering::SeqCst);
+        let replaced = cache.push(chunk_indices, chunk);
+        if let Some((_k, old)) = replaced {
+            size -= old.size();
         }
+        size += new_chunk_size;
+        self.size.set(size);
     }
 
     fn try_get_or_insert_with<F>(
@@ -266,8 +276,7 @@ impl<CT: ChunkCacheType> ChunkCacheLruSizeLimitThreadLocal<CT> {
         }
 
         // self.cache()
-        //     .lock()
-        //     .unwrap()
+        //     .borrow_mut()
         //     .try_get_or_insert(chunk_indices, f)
         //     .cloned()
         //     .map_err(|e| Arc::new(e))
@@ -281,8 +290,8 @@ macro_rules! impl_ChunkCacheLruCommon {
         }
 
         fn len(&self) -> usize {
-            self.cache.run_pending_tasks();
-            usize::try_from(self.cache.entry_count()).unwrap()
+            // self.cache.run_pending_tasks();
+            usize::try_from(self.cache.borrow().entry_count()).unwrap()
         }
     };
 }
@@ -515,7 +524,7 @@ macro_rules! impl_ChunkCacheLruChunkLimitThreadLocal {
         }
 
         fn len(&self) -> usize {
-            self.cache().lock().unwrap().len()
+            self.cache().borrow().len()
         }
     };
 }
@@ -542,7 +551,7 @@ macro_rules! impl_ChunkCacheLruSizeLimitThreadLocal {
         }
 
         fn len(&self) -> usize {
-            self.cache().lock().unwrap().len()
+            self.cache().borrow().len()
         }
     };
 }
