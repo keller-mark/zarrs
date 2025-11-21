@@ -14,7 +14,7 @@ categories = ["encoding", "science"]
 exclude = [".github/", "doc/TODO.md", "tests/"]
 
 [features]
-default = ["filesystem", "ndarray", "blosc", "crc32c", "gzip", "sharding", "transpose", "zstd"]
+default = ["filesystem", "ndarray", "crc32c", "gzip", "sharding", "transpose", "zstd"]
 filesystem = ["dep:zarrs_filesystem"] # Re-export zarrs_filesystem as zarrs::filesystem
 adler32 = ["dep:simd-adler32"] # Enable the adler32 checksum codec
 bitround = [] # Enable the bitround codec
@@ -29,7 +29,7 @@ sharding = [] # Enable the sharding codec
 transpose = ["dep:ndarray"] # Enable the transpose codec
 zfp = ["dep:zfp-sys"] # Enable the zfp codec
 zlib = ["dep:flate2"] # Enable the zlib codec
-zstd = ["dep:zstd"] # Enable the zstd codec
+zstd = ["dep:zstd", "dep:zstd-sys"] # Enable the zstd codec
 ndarray = ["dep:ndarray"] # Adds ndarray utility functions to Array
 dlpack =["dep:dlpark"] # Adds dlpack utility functions to Array
 async = ["dep:async-generic", "dep:async-trait", "dep:futures", "moka/future", "zarrs_storage/async"] # Enable experimental async API
@@ -80,7 +80,12 @@ zarrs_plugin.workspace = true
 zarrs_registry.workspace = true
 zarrs_storage.workspace = true
 zfp-sys = {version = "0.3.0", features = ["static"], optional = true }
-zstd = { version = "0.13.3", features = ["zstdmt", "experimental"], optional = true }
+# References:
+# - https://github.com/kylebarron/parquet-wasm/blob/d9e9e1f0762e8a4c1c710f66550f00c3534d350f/Cargo.toml#L87C1-L92C77
+# - https://github.com/kylebarron/parquet-wasm/blob/main/DEVELOP.md#macos
+# - https://github.com/gyscos/zstd-rs/issues/93
+zstd = { version = "*", features = ["wasm", "thin"], default-features = false, optional = true }
+zstd-sys = { version = "=2.0.9", optional = true, default-features = false }
 dlpark = { version = ">=0.4.1,<0.6", features = ["half"], optional = true }
 async-generic = { version = "1.1.2", optional = true }
 async-lock = "3.4.0"
