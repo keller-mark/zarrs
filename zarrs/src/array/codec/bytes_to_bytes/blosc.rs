@@ -49,7 +49,7 @@ use std::{
 };
 
 pub use blosc_codec::BloscCodec;
-use blosc2_src::{
+use blusc::{
     blosc1_cbuffer_metainfo, blosc1_cbuffer_validate, blosc1_cbuffer_sizes, blosc1_getitem,
     BLOSC2_MAX_OVERHEAD,
     // For compression
@@ -100,12 +100,12 @@ impl From<&str> for BloscError {
 
 const fn compressor_as_cstr(compressor: BloscCompressor) -> *const u8 {
     match compressor {
-        BloscCompressor::BloscLZ => blosc2_src::BLOSC_BLOSCLZ_COMPNAME.as_ptr(),
-        BloscCompressor::LZ4 => blosc2_src::BLOSC_LZ4_COMPNAME.as_ptr(),
-        BloscCompressor::LZ4HC => blosc2_src::BLOSC_LZ4HC_COMPNAME.as_ptr(),
-        //BloscCompressor::Snappy => blosc2_src::BLOSC_SNAPPY_COMPNAME.as_ptr(),
-        BloscCompressor::Zlib => blosc2_src::BLOSC_ZLIB_COMPNAME.as_ptr(),
-        BloscCompressor::Zstd => blosc2_src::BLOSC_ZSTD_COMPNAME.as_ptr(),
+        BloscCompressor::BloscLZ => blusc::BLOSC_BLOSCLZ_COMPNAME.as_ptr(),
+        BloscCompressor::LZ4 => blusc::BLOSC_LZ4_COMPNAME.as_ptr(),
+        BloscCompressor::LZ4HC => blusc::BLOSC_LZ4HC_COMPNAME.as_ptr(),
+        //BloscCompressor::Snappy => blusc::BLOSC_SNAPPY_COMPNAME.as_ptr(),
+        BloscCompressor::Zlib => blusc::BLOSC_ZLIB_COMPNAME.as_ptr(),
+        BloscCompressor::Zstd => blusc::BLOSC_ZSTD_COMPNAME.as_ptr(),
     }
 }
 

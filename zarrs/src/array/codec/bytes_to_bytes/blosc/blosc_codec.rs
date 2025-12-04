@@ -1,6 +1,6 @@
 use std::{borrow::Cow, ffi::c_char, sync::Arc};
 
-use blosc2_src::{blosc2_get_complib_info, BLOSC2_MAX_OVERHEAD};
+use blusc::{blosc2_get_complib_info, BLOSC2_MAX_OVERHEAD};
 use zarrs_metadata::Configuration;
 use zarrs_registry::codec::BLOSC;
 
