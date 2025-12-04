@@ -138,10 +138,11 @@ fn blosc_compress_bytes(
         cparams.compcode = match compressor {
             BloscCompressor::BloscLZ => 0,
             BloscCompressor::LZ4 => 1,
-            BloscCompressor::LZ4HC => 2,
-            BloscCompressor::Zlib => 4,
-            BloscCompressor::Zstd => 5,
-            BloscCompressor::Snappy => 3,
+            BloscCompressor::Snappy => 2,
+            BloscCompressor::Zlib => 3,
+            BloscCompressor::Zstd => 4,
+            _ => 0,
+            
         };
         cparams.filters[5] = match shuffle_mode {
             BloscShuffleMode::NoShuffle => 0,
