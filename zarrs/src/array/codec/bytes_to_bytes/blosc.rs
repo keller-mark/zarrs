@@ -101,7 +101,7 @@ fn compressor_as_str(compressor: BloscCompressor) -> &'static str {
         BloscCompressor::BloscLZ => blusc::BLOSC_BLOSCLZ_COMPNAME as &[u8],
         BloscCompressor::LZ4 => blusc::BLOSC_LZ4_COMPNAME as &[u8],
         BloscCompressor::LZ4HC => blusc::BLOSC_LZ4HC_COMPNAME as &[u8],
-        //BloscCompressor::Snappy => blusc::BLOSC_SNAPPY_COMPNAME as &[u8],
+        BloscCompressor::Snappy => blusc::BLOSC_SNAPPY_COMPNAME as &[u8],
         BloscCompressor::Zlib => blusc::BLOSC_ZLIB_COMPNAME as &[u8],
         BloscCompressor::Zstd => blusc::BLOSC_ZSTD_COMPNAME as &[u8],
     };
@@ -141,6 +141,7 @@ fn blosc_compress_bytes(
             BloscCompressor::LZ4HC => 2,
             BloscCompressor::Zlib => 4,
             BloscCompressor::Zstd => 5,
+            BloscCompressor::Snappy => 3,
         };
         cparams.filters[5] = match shuffle_mode {
             BloscShuffleMode::NoShuffle => 0,
@@ -326,6 +327,19 @@ mod tests {
     #[cfg_attr(miri, ignore)]
     fn codec_blosc_round_trip3() {
         codec_blosc_round_trip(JSON_VALID3);
+    }
+
+    #[test]
+    #[cfg_attr(miri, ignore)]
+    fn codec_blosc_round_trip_snappy() {
+        let json = r#"
+{
+    "cname": "snappy",
+    "clevel": 4,
+    "shuffle": "noshuffle",
+    "blocksize": 0
+}"#;
+        codec_blosc_round_trip(json);
     }
 
     #[test]
