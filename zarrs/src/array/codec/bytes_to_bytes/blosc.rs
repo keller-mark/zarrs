@@ -128,12 +128,25 @@ fn blosc_compress_bytes(
 
     // let mut dest = vec![0; src.len() + BLOSC_MAX_OVERHEAD as usize];
     let destsize = src.len() + BLOSC2_MAX_OVERHEAD as usize;
-    let mut dest: Vec<u8> = Vec::with_capacity(destsize);
+    let mut dest: Vec<u8> = vec![0; destsize];
     let destsize = {
         let mut cparams = BLOSC2_CPARAMS_DEFAULTS;
         cparams.typesize = typesize as i32;
         cparams.clevel = i32::from(u8::from(clevel));
         cparams.nthreads = numinternalthreads as i32;
+        cparams.blocksize = blocksize as i32;
+        cparams.compcode = match compressor {
+            BloscCompressor::BloscLZ => 0,
+            BloscCompressor::LZ4 => 1,
+            BloscCompressor::LZ4HC => 2,
+            BloscCompressor::Zlib => 4,
+            BloscCompressor::Zstd => 5,
+        };
+        cparams.filters[5] = match shuffle_mode {
+            BloscShuffleMode::NoShuffle => 0,
+            BloscShuffleMode::Shuffle => 1,
+            BloscShuffleMode::BitShuffle => 2,
+        };
         let context = blosc2_create_cctx(cparams);
 
         blosc2_compress_ctx(&context, src, &mut dest)
@@ -184,7 +197,7 @@ fn blosc_decompress_bytes(
         1
     };
 
-    let mut dest: Vec<u8> = Vec::with_capacity(destsize);
+    let mut dest: Vec<u8> = vec![0; destsize];
     let destsize = {
         let mut dparams = BLOSC2_DPARAMS_DEFAULTS;
         dparams.nthreads = numinternalthreads as i32;
@@ -211,7 +224,7 @@ fn blosc_decompress_bytes_partial(
 ) -> Result<Vec<u8>, BloscError> {
     let start = i32::try_from(offset / typesize).unwrap();
     let nitems = i32::try_from(length / typesize).unwrap();
-    let mut dest: Vec<u8> = Vec::with_capacity(length);
+    let mut dest: Vec<u8> = vec![0; length];
     let destsize = blosc1_getitem(src, start, nitems, &mut dest);
     if destsize <= 0 {
         Err(BloscError::from(format!(
@@ -313,19 +326,6 @@ mod tests {
     #[cfg_attr(miri, ignore)]
     fn codec_blosc_round_trip3() {
         codec_blosc_round_trip(JSON_VALID3);
-    }
-
-    #[test]
-    #[cfg_attr(miri, ignore)]
-    fn codec_blosc_round_trip_snappy() {
-        let json = r#"
-{
-    "cname": "snappy",
-    "clevel": 4,
-    "shuffle": "noshuffle",
-    "blocksize": 0
-}"#;
-        codec_blosc_round_trip(json);
     }
 
     #[test]
