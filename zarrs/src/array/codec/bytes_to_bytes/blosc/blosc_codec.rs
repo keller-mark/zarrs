@@ -1,4 +1,4 @@
-use std::{borrow::Cow, ffi::c_char, sync::Arc};
+use std::{borrow::Cow, sync::Arc};
 
 use blusc::{blosc2_get_complib_info, BLOSC2_MAX_OVERHEAD};
 use zarrs_metadata::Configuration;
@@ -21,7 +21,7 @@ use crate::array::codec::AsyncBytesPartialDecoderTraits;
 
 use super::{
     blosc_compress_bytes, blosc_decompress_bytes, blosc_partial_decoder, blosc_validate,
-    compressor_as_cstr, BloscCodecConfiguration, BloscCodecConfigurationV1, BloscCompressionLevel,
+    compressor_as_str, BloscCodecConfiguration, BloscCodecConfigurationV1, BloscCompressionLevel,
     BloscCompressor, BloscError, BloscShuffleMode,
 };
 
@@ -62,13 +62,9 @@ impl BloscCodec {
         }
 
         // Check that the compressor is available
-        let support = unsafe {
-            blosc2_get_complib_info(
-                compressor_as_cstr(cname).cast::<c_char>(),
-                std::ptr::null_mut(),
-                std::ptr::null_mut(),
-            )
-        };
+        let support = blosc2_get_complib_info(compressor_as_str(cname))
+            .map(|(_, _, support)| support)
+            .unwrap_or(-1);
         if support < 0 {
             return Err(PluginCreateError::from(format!(
                 "compressor {cname:?} is not supported."

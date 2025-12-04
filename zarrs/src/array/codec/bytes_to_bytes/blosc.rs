@@ -43,19 +43,17 @@ mod blosc_partial_decoder;
 /// Otherwise, these functions will use one thread regardless of the `numinternalthreads` parameter.
 const MIN_PARALLEL_LENGTH: usize = 4_000_000;
 
-use std::{
-    ffi::{c_char, c_int, c_void},
-    sync::Arc,
-};
+use std::sync::Arc;
 
 pub use blosc_codec::BloscCodec;
 use blusc::{
-    blosc1_cbuffer_metainfo, blosc1_cbuffer_validate, blosc1_cbuffer_sizes, blosc1_getitem,
-    BLOSC2_MAX_OVERHEAD,
+    blosc1_cbuffer_metainfo, blosc1_cbuffer_sizes, blosc1_cbuffer_validate, blosc1_getitem,
+    blosc2_compress_ctx, blosc2_create_cctx, blosc2_create_dctx, blosc2_decompress_ctx,
     // For compression
-    BLOSC2_CPARAMS_DEFAULTS, blosc2_create_cctx, blosc2_compress_ctx,
+    BLOSC2_CPARAMS_DEFAULTS,
+    BLOSC2_DPARAMS_DEFAULTS,
+    BLOSC2_MAX_OVERHEAD,
     // For decompression
-    blosc2_cbuffer_sizes, BLOSC2_DPARAMS_DEFAULTS, blosc2_create_dctx, blosc2_decompress_ctx,
 };
 use derive_more::From;
 use thiserror::Error;
@@ -98,15 +96,19 @@ impl From<&str> for BloscError {
     }
 }
 
-const fn compressor_as_cstr(compressor: BloscCompressor) -> *const u8 {
-    match compressor {
-        BloscCompressor::BloscLZ => blusc::BLOSC_BLOSCLZ_COMPNAME.as_ptr(),
-        BloscCompressor::LZ4 => blusc::BLOSC_LZ4_COMPNAME.as_ptr(),
-        BloscCompressor::LZ4HC => blusc::BLOSC_LZ4HC_COMPNAME.as_ptr(),
-        //BloscCompressor::Snappy => blusc::BLOSC_SNAPPY_COMPNAME.as_ptr(),
-        BloscCompressor::Zlib => blusc::BLOSC_ZLIB_COMPNAME.as_ptr(),
-        BloscCompressor::Zstd => blusc::BLOSC_ZSTD_COMPNAME.as_ptr(),
-    }
+fn compressor_as_str(compressor: BloscCompressor) -> &'static str {
+    let compname = match compressor {
+        BloscCompressor::BloscLZ => blusc::BLOSC_BLOSCLZ_COMPNAME as &[u8],
+        BloscCompressor::LZ4 => blusc::BLOSC_LZ4_COMPNAME as &[u8],
+        BloscCompressor::LZ4HC => blusc::BLOSC_LZ4HC_COMPNAME as &[u8],
+        //BloscCompressor::Snappy => blusc::BLOSC_SNAPPY_COMPNAME as &[u8],
+        BloscCompressor::Zlib => blusc::BLOSC_ZLIB_COMPNAME as &[u8],
+        BloscCompressor::Zstd => blusc::BLOSC_ZSTD_COMPNAME as &[u8],
+    };
+    std::ffi::CStr::from_bytes_with_nul(compname)
+        .expect("compressor name is not a valid C string")
+        .to_str()
+        .expect("compressor name is not valid UTF-8")
 }
 
 fn blosc_compress_bytes(
@@ -127,34 +129,14 @@ fn blosc_compress_bytes(
     // let mut dest = vec![0; src.len() + BLOSC_MAX_OVERHEAD as usize];
     let destsize = src.len() + BLOSC2_MAX_OVERHEAD as usize;
     let mut dest: Vec<u8> = Vec::with_capacity(destsize);
-    let destsize = unsafe {
+    let destsize = {
         let mut cparams = BLOSC2_CPARAMS_DEFAULTS;
         cparams.typesize = typesize as i32;
-        cparams.clevel = clevel.into();
+        cparams.clevel = i32::from(u8::from(clevel));
+        cparams.nthreads = numinternalthreads as i32;
         let context = blosc2_create_cctx(cparams);
 
-        /*
-        blosc_compress_ctx(
-            c_int::from(clevel),
-            shuffle_mode as c_int,
-            std::cmp::max(1, typesize), // 0 is an error, even with noshuffle?
-            src.len(),
-            src.as_ptr().cast::<c_void>(),
-            dest.as_mut_ptr().cast::<c_void>(),
-            destsize,
-            compressor_as_cstr(compressor).cast::<c_char>(),
-            blocksize,
-            i32::try_from(numinternalthreads).unwrap(),
-        )
-        */
-
-        blosc2_compress_ctx(
-            context,
-            src.as_ptr().cast::<c_void>(),
-            src.len() as i32,
-            dest.as_mut_ptr().cast::<c_void>(),
-            destsize as i32,
-        )
+        blosc2_compress_ctx(&context, src, &mut dest)
     };
     if destsize > 0 {
         unsafe {
@@ -170,26 +152,14 @@ fn blosc_compress_bytes(
 }
 
 fn blosc_validate(src: &[u8]) -> Option<usize> {
-    let mut destsize: usize = 0;
-    let valid = unsafe {
-        blosc1_cbuffer_validate(src.as_ptr().cast::<c_void>(), src.len(), &raw mut destsize)
-    } == 0;
-    valid.then_some(destsize)
+    blosc1_cbuffer_validate(src, src.len()).ok()
 }
 
 /// # Safety
 ///
 /// Validate first
 fn blosc_typesize(src: &[u8]) -> Option<usize> {
-    let mut typesize: usize = 0;
-    let mut flags: i32 = 0;
-    unsafe {
-        blosc1_cbuffer_metainfo(
-            src.as_ptr().cast::<c_void>(),
-            &raw mut typesize,
-            &raw mut flags,
-        );
-    };
+    let (typesize, _flags) = blosc1_cbuffer_metainfo(src)?;
     (typesize != 0).then_some(typesize)
 }
 
@@ -199,17 +169,7 @@ fn blosc_typesize(src: &[u8]) -> Option<usize> {
 ///
 /// Validate first
 fn blosc_nbytes(src: &[u8]) -> Option<usize> {
-    let mut uncompressed_bytes: usize = 0;
-    let mut cbytes: usize = 0;
-    let mut blocksize: usize = 0;
-    unsafe {
-        blosc1_cbuffer_sizes(
-            src.as_ptr().cast::<c_void>(),
-            &raw mut uncompressed_bytes,
-            &raw mut cbytes,
-            &raw mut blocksize,
-        );
-    };
+    let (uncompressed_bytes, cbytes, blocksize) = blosc1_cbuffer_sizes(src);
     (uncompressed_bytes > 0 && cbytes > 0 && blocksize > 0).then_some(uncompressed_bytes)
 }
 
@@ -225,16 +185,11 @@ fn blosc_decompress_bytes(
     };
 
     let mut dest: Vec<u8> = Vec::with_capacity(destsize);
-    let destsize = unsafe {
-        let dparams = BLOSC2_DPARAMS_DEFAULTS;
+    let destsize = {
+        let mut dparams = BLOSC2_DPARAMS_DEFAULTS;
+        dparams.nthreads = numinternalthreads as i32;
         let context = blosc2_create_dctx(dparams);
-        blosc2_decompress_ctx(
-            context,
-            src.as_ptr().cast::<c_void>(),
-            src.len() as i32,
-            dest.as_mut_ptr().cast::<c_void>(),
-            destsize as i32,
-        )
+        blosc2_decompress_ctx(&context, src, &mut dest)
     };
     if destsize > 0 {
         unsafe {
@@ -257,14 +212,7 @@ fn blosc_decompress_bytes_partial(
     let start = i32::try_from(offset / typesize).unwrap();
     let nitems = i32::try_from(length / typesize).unwrap();
     let mut dest: Vec<u8> = Vec::with_capacity(length);
-    let destsize = unsafe {
-        blosc1_getitem(
-            src.as_ptr().cast::<c_void>(),
-            start,
-            nitems,
-            dest.as_mut_ptr().cast::<c_void>(),
-        )
-    };
+    let destsize = blosc1_getitem(src, start, nitems, &mut dest);
     if destsize <= 0 {
         Err(BloscError::from(format!(
             "blosc_getitem(src: len {}, start: {start}, nitems: {nitems}) -> {destsize} (failure)",
