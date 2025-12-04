@@ -79,7 +79,7 @@ pub enum BloscCompressor {
     /// [LZ4HC](http://fastcompression.blogspot.com/p/lz4.html): a tweaked version of LZ4, produces better compression ratios at the expense of speed.
     LZ4HC,
     /// [Snappy](https://code.google.com/p/snappy): a popular compressor used in many places.
-    Snappy,
+    //Snappy,
     /// [Zlib](http://www.zlib.net/): a classic; somewhat slower than the previous ones, but achieving better compression ratios.
     Zlib,
     /// [Zstd](http://www.zstd.net/): an extremely well balanced codec; it provides the best compression ratios among the others above, and at reasonably fast speed.

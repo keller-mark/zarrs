@@ -1,6 +1,6 @@
 use std::{borrow::Cow, ffi::c_char, sync::Arc};
 
-use blosc_src::{blosc_get_complib_info, BLOSC_MAX_OVERHEAD};
+use blosc2_src::{blosc2_get_complib_info, BLOSC2_MAX_OVERHEAD};
 use zarrs_metadata::Configuration;
 use zarrs_registry::codec::BLOSC;
 
@@ -63,7 +63,7 @@ impl BloscCodec {
 
         // Check that the compressor is available
         let support = unsafe {
-            blosc_get_complib_info(
+            blosc2_get_complib_info(
                 compressor_as_cstr(cname).cast::<c_char>(),
                 std::ptr::null_mut(),
                 std::ptr::null_mut(),
@@ -259,7 +259,7 @@ impl BytesToBytesCodecTraits for BloscCodec {
         decoded_representation
             .size()
             .map_or(BytesRepresentation::UnboundedSize, |size| {
-                BytesRepresentation::BoundedSize(size + u64::from(BLOSC_MAX_OVERHEAD))
+                BytesRepresentation::BoundedSize(size + u64::from(BLOSC2_MAX_OVERHEAD as u32))
             })
     }
 }
