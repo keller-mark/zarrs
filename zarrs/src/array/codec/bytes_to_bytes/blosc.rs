@@ -138,11 +138,10 @@ fn blosc_compress_bytes(
         cparams.compcode = match compressor {
             BloscCompressor::BloscLZ => 0,
             BloscCompressor::LZ4 => 1,
+            BloscCompressor::LZ4HC => 1,
             BloscCompressor::Snappy => 2,
             BloscCompressor::Zlib => 3,
             BloscCompressor::Zstd => 4,
-            _ => 0,
-            
         };
         cparams.filters[5] = match shuffle_mode {
             BloscShuffleMode::NoShuffle => 0,
@@ -203,6 +202,7 @@ fn blosc_decompress_bytes(
     let destsize = {
         let mut dparams = BLOSC2_DPARAMS_DEFAULTS;
         dparams.nthreads = numinternalthreads as i32;
+        // TODO: see tests in blusc and fix.
         let context = blosc2_create_dctx(dparams);
         blosc2_decompress_ctx(&context, src, &mut dest)
     };
