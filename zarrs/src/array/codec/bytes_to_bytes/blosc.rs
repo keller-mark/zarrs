@@ -97,18 +97,14 @@ impl From<&str> for BloscError {
 }
 
 fn compressor_as_str(compressor: BloscCompressor) -> &'static str {
-    let compname = match compressor {
-        BloscCompressor::BloscLZ => blusc::BLOSC_BLOSCLZ_COMPNAME as &[u8],
-        BloscCompressor::LZ4 => blusc::BLOSC_LZ4_COMPNAME as &[u8],
-        BloscCompressor::LZ4HC => blusc::BLOSC_LZ4HC_COMPNAME as &[u8],
-        BloscCompressor::Snappy => blusc::BLOSC_SNAPPY_COMPNAME as &[u8],
-        BloscCompressor::Zlib => blusc::BLOSC_ZLIB_COMPNAME as &[u8],
-        BloscCompressor::Zstd => blusc::BLOSC_ZSTD_COMPNAME as &[u8],
-    };
-    std::ffi::CStr::from_bytes_with_nul(compname)
-        .expect("compressor name is not a valid C string")
-        .to_str()
-        .expect("compressor name is not valid UTF-8")
+    match compressor {
+        BloscCompressor::BloscLZ => blusc::BLOSC_BLOSCLZ_COMPNAME,
+        BloscCompressor::LZ4 => blusc::BLOSC_LZ4_COMPNAME,
+        BloscCompressor::LZ4HC => blusc::BLOSC_LZ4HC_COMPNAME,
+        BloscCompressor::Snappy => blusc::BLOSC_SNAPPY_COMPNAME,
+        BloscCompressor::Zlib => blusc::BLOSC_ZLIB_COMPNAME,
+        BloscCompressor::Zstd => blusc::BLOSC_ZSTD_COMPNAME,
+    }
 }
 
 fn blosc_compress_bytes(
@@ -132,8 +128,8 @@ fn blosc_compress_bytes(
     let destsize = {
         let mut cparams = BLOSC2_CPARAMS_DEFAULTS;
         cparams.typesize = typesize as i32;
-        cparams.clevel = i32::from(u8::from(clevel));
-        cparams.nthreads = numinternalthreads as i32;
+        cparams.clevel = clevel.into();
+        cparams.nthreads = numinternalthreads as i16;
         cparams.blocksize = blocksize as i32;
         cparams.compcode = match compressor {
             BloscCompressor::BloscLZ => 0,
@@ -201,7 +197,7 @@ fn blosc_decompress_bytes(
     let mut dest: Vec<u8> = vec![0; destsize];
     let destsize = {
         let mut dparams = BLOSC2_DPARAMS_DEFAULTS;
-        dparams.nthreads = numinternalthreads as i32;
+        dparams.nthreads = numinternalthreads as i16;
         // TODO: see tests in blusc and fix.
         let context = blosc2_create_dctx(dparams);
         blosc2_decompress_ctx(&context, src, &mut dest)
