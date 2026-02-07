@@ -7,13 +7,201 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Bump `pcodec` to 1.0.0
+
+### Fixed
+- Support Zarr V2 `|VX` data with a `null` fill value
+
+## [0.23.0] - 2026-02-02
+
+### Highlights and Major Breaking Changes
+
+> This release includes many breaking changes, particularly for extension developers.
+> The most impactful breaking changes are summarised below.
+
+- Improved performance!
+- **Breaking**: `DataType` is now a newtype holding (`Arc<dyn DataTypeExtension>`) rather than an enum
+  - Use factory functions in `zarrs::array::data_type` to create data types (e.g. `data_type::int8()`, `data_type::float32()`, etc.)
+
+  ```diff
+  - let data_type = DataType::Float32;
+  + let data_type: DataType = data_type::float32();
+  ```
+- **Breaking**: Generic `Array` `store_*` and `retrieve_*` methods
+
+  ```diff
+  - let data = array.retrieve_array_subset(&subset)?;
+  - let data: Vec<f32> = array.retrieve_array_subset_elements(&subset)?;
+  - let data: ndarray::ArrayD<f32> = array.retrieve_array_subset_ndarray(&subset)?;
+  + let data: ArrayBytes = array.retrieve_array_subset(&subset)?;
+  + let data: Vec<f32> = array.retrieve_array_subset(&subset)?;
+  + let data: ndarray::ArrayD<f32> = array.retrieve_array_subset(&subset)?;
+  ```
+
+  ```diff
+  - array.store_array_subset_elements(&subset, &data)?;
+  - array.store_array_subset_ndarray(&subset, &data)?;
+  + array.store_array_subset(&subset, &data)?;
+  ```
+
+- **Breaking**: split `zarrs` into more crates, add `zarrs_codec`, `zarrs_chunk_grid`, and `zarrs_chunk_key_encoding`
+  - Many types that were previously accessible in these modules are not individually re-exported, but are accessible via `api` submodules
+  - Various types are now only re-exported higher in `zarrs::array`, e.g. `zarrs::array::data_type::DataType` -> `zarrs::array::DataType`
+- **Breaking**: Rename sharding "inner chunk" terminology to "subchunk" (`inner_chunk_shape()` → `subchunk_shape()`, `retrieve_inner_chunk_opt()` → `retrieve_subchunk_opt()`, etc.)
+
+- Many parameters are now `&dyn ArraySubsetTraits` instead of `ArraySubset` for ergonomic array subset indexing
+
+  ```diff
+  - array.retrieve_array_subset(&ArraySubset::new_with_ranges(&[0..3, 10..20]))?;
+  + array.retrieve_array_subset(&[0..3, 10..20])?;
+  ```
+
+- Add `ArrayBuilder::subchunk_shape()`. Recommended over `ShardingCodecBuilder` for most use cases
+
+  ```diff
+  - array_builder.array_to_bytes_codec(
+  -    ShardingCodecBuilder::new(
+  -        vec![4, 4].try_into()?, // subchunk shape
+  -    )
+  -    .build_arc(),
+  -)
+  +.subchunk_shape(vec![4, 4])
+  ```
+
+- Add the `zarrs.optional` data type and codec (spec proposal https://github.com/zarr-developers/zarr-extensions/pull/33)
+- Much improved API for Zarr extension point registration and aliasing, with runtime extension registration support
+  - See <https://book.zarrs.dev/extensions.html> for a tutorial on custom data types and codecs
+
+### Added
+- Add `ElementError` type for `Element` and `ElementOwned` trait methods
+- Add `ZfpyCodec` for `numcodecs.zfpy` compatibility
+- Add `zarrs::convert` module (moved from `zarrs_metadata_ext::v2_to_v3`)
+- Add data type marker types (`BoolDataType`, `Int8DataType`, `Float32DataType`, etc.) in `zarrs::array::data_type` (implementing `ExtensionAliases` for per-data-type alias management and `DataTypeTraits::compatible_element_types()` for `Element` type compatibility)
+- Add `ArrayBytesVariableLength`, `ArrayBytesDecodeIntoTarget`, and `ArrayBytesOptional` types
+- Add support for the `optional` data type and codec (`OptionalCodec`, `OptionalDataType`, `Element[Owned]` for `Option<T>`, examples)
+- Add chunk compaction API (`Array::[async_]compact_chunk()`, `ArrayToBytesCodecTraits::compact()`)
+- Add `zarrs::array::codec::default_array_to_bytes_codec()`
+- Add `ArrayBuilder::subchunk_shape()` and `InvalidSubchunkShape` variant to `ArrayCreateError`
+- Add `Tensor` type for tensor library interop (implements `dlpack::traits::TensorLike`) and `TensorError`/`ArrayError::TensorError`
+- Add `Config::{codec_options,codec_metadata_options,array_metadata_options,group_metadata_options}()` methods
+- Add `Default` implementation for `MetadataConvertVersion` and `MetadataEraseVersion`
+- Add runtime extension registration for codecs, data types, chunk grids, chunk key encodings, and storage transformers
+- Add `ArrayError::ArraySubsetError` variant and `CodecOptions::[{set_,with_}]chunk_concurrent_minimum()`
+- Add `register_data_type_extension_codec!` macro and `DataTypeExt` trait
+- Add `From<ExpectedFixedLengthBytesError>`, `From<ExpectedVariableLengthBytesError>`, and `From<ExpectedOptionalBytesError>` for `ArrayError`
+- Add `ArrayError::ElementError` variant
+
+### Changed
+- **Breaking**: `Element` and `ElementOwned` trait methods now return `ElementError` instead of `ArrayError`
+- **Breaking**: Replace `ArrayError::IncompatibleElementType` and `ArrayError::InvalidElementValue` with `ArrayError::ElementError`
+- **Breaking**: Bump MSRV to 1.91 and use Rust 2024 edition
+- **Breaking**: Bump public dependencies: `zarrs_metadata` 0.7.2, `zarrs_data_type` 0.9.0, `zarrs_metadata_ext` 0.4.1, `zarrs_plugin` 0.4.1, `zarrs_filesystem` 0.3.9, `zarrs_storage` 0.4.2, `float8` 0.5.0, `dlpark` 0.6.0, `ndarray` 0.17.1
+- Bump internal dependencies: `zfp-sys` 0.4.2, `pco` 0.4.9, `criterion` (dev) 0.8.1
+- **Breaking**: Replace `DataType` enum with `Arc<dyn DataTypeExtension>`
+- **Breaking**: Revise extension alias handling for codecs, chunk grids, and chunk key encodings
+  - Extensions now implement `ExtensionAliases<V>` trait for per-extension alias management
+  - Remove `ExtensionAliasesCodecV3` parameter from `Codec::from_metadata()`, `CodecChain::from_metadata()`, `default_array_to_bytes_codec()`, and codec constructor methods
+- **Breaking**: Change `StorageTransformerPlugin` to the new `Plugin` system from `zarrs_plugin`
+- **Breaking**: Add node to `NodeCreateError::MissingMetadata` message ([#280] by [@mannreis])
+- **Breaking**: Refactor `ArrayBytes` and related types:
+  - `ArrayBytes::new_fill_value()` now takes a `data_type` and `num_elements` and is fallible
+  - `ArrayBytes::Variable` variant now holds `ArrayBytesVariableLength` rather than bytes and offsets
+  - `ArrayBytes::validate()` now takes a `DataType` instead of a `DataTypeSize`
+  - `ArrayBytes::into_variable()` now returns `ArrayBytesVariableLength` instead of a bytes and offsets tuple
+  - Rename `RawBytes` to `ArrayBytesRaw`, `RawBytesOffsets` to `ArrayBytesOffsets`
+- **Breaking**: Change various methods to take `ArrayBytesDecodeIntoTarget` instead of `ArrayBytesFixedDisjointView` (`[Async]ArrayPartialDecoderTraits::partial_decode_into()`, `ArrayToBytesCodecTraits::decode_into()`, `[Async]Array::retrieve_chunk[_subset]_into()`, `copy_fill_value_into()`)
+- **Breaking**: Return borrowed references instead of owned collections: `{Array,Chunk}Representation::shape_u64()` returns `&[u64]}`, `Array::chunk_grid_shape()` returns `&[u64]`
+- **Breaking**: Move modules into `zarrs_chunk_grid` and re-export; `ArraySubset` moves from `array_subset` to `array` module
+- **Breaking**: Add `DataType` parameter to `ShardingCodecBuilder::new()` so that it can choose an appropriate default array-to-bytes codec
+- **Breaking**: `Element::into_array_bytes()` now takes an owned `Vec<T>` instead of a slice `&[T]` (added `Element::to_array_bytes()` matching the old signature)
+- **Breaking**: Refactor array store and retrieve methods to be generic over input and output types
+  - `{Array,ArrayShardedReadableExt,ChunkCache}::retrieve_*` methods are now generic over the return type (any type implementing `FromArrayBytes`)
+  - `Array::store_*` methods are now generic over the input type (any type implementing `IntoArrayBytes`)
+  - Deprecate `Array::retrieve_*_{ndarray,elements}` and `Array::{store,retrieve}*_{ndarray,elements}` in favour of the generic methods
+  - Remove `Array::store_*_dlpark` and `Array::retrieve_*_dlpark` methods (use `Tensor` type instead)
+  - Added `ChunkCache::retrieve_*_bytes` methods that return `ChunkCacheTypeDecoded` directly
+- **Breaking**: Change various methods to take `ChunkShape`, `DataType`, and `FillValue` instead of `ChunkRepresentation` (`CodecPartialDefault::new()`, various codec trait methods)
+- **Breaking**: Replace `ChunkShape` newtype with `Vec<NonZeroU64>`, use `ChunkShapeTraits` instead
+- **Breaking**: Refactor low-level codec API to reduce global config retrieval
+  - `CodecOptions` and `CodecMetadataOptions` now implement `Copy` with hardcoded defaults; use `Config::codec_options()` / `Config::codec_metadata_options()` to get options from global config
+  - Remove `CodecOptionsBuilder`, `CodecOptions::builder()`, `CodecOptions::into_builder()`
+  - Rename `ArrayMetadataOptions::codec_options[_mut]()` to `codec_metadata_options[_mut]()`, `CodecTraits::configuration_opt()` to `configuration()`, `CodecChain::create_metadatas_opt()` to `create_metadatas()`
+  - Add `ZarrVersion` parameter to `CodecTraits::configuration()`
+  - Remove `CodecTraits::default_name()`
+- **Breaking**: Refactor `DataType` API: replace `{DataType,DataTypeExtension}::name()` with `ExtensionName` trait, replace `DataType::metadata()` with `configuration()`
+- Performance improvements: avoid unnecessary copies/allocations in `Array` methods and codecs, improve index iterator performance
+- `Array`, `ChunkCache`, and `ArrayShardedReadableExt` methods take `&dyn ArraySubsetTraits` instead of `&ArraySubset`
+- **Breaking**: `CodecTraits` changes: require `ExtensionName` implementation, add `is_any()` method, remove `name` parameter from `configuration`
+- **Breaking**: Change `Codec::from_metadata` parameter to `&CodecMetadata` instead of `&MetadataV3`
+- **Breaking**: Change the representation of the `ArrayError::{InvalidFillValue,InvalidFillValueMetadata}` variants
+- **Breaking**: Rename `ArrayBytesFixedDisjointViewCreateError::IncompatibleIndexerError` to `IndexerError`
+- **Breaking**: Do not re-export `array::FillValueMetadata{V2,V3}`, use `FillValueMetadata` instead
+- **Breaking**: Rename `StorageTransformerExtension` to `StorageTransformerTraits` for alignment with other extension traits
+  - add `create` and `configuration`methods, remove `metadata` method
+- **Breaking**: Rename sharding "inner chunk" terminology to "subchunk" throughout:
+  - `ArrayShardedExt`: `inner_chunk_shape()` → `subchunk_shape()`, `effective_inner_chunk_shape()` → `effective_subchunk_shape()`, `inner_chunk_grid()` → `subchunk_grid()`, `inner_chunk_grid_shape()` → `subchunk_grid_shape()`
+  - `ArrayShardedReadableExt` / `AsyncArrayShardedReadableExt`: `inner_chunk_byte_range()` → `subchunk_byte_range()`, `retrieve_encoded_inner_chunk()` → `retrieve_encoded_subchunk()`, `retrieve_inner_chunk_opt()` → `retrieve_subchunk_opt()`, `retrieve_inner_chunks_opt()` → `retrieve_subchunks_opt()`, and related `_elements` / `_ndarray` methods
+- Refactor `Element`/`ElementOwned` implementations into separate submodules and use `DataTypeTraits::compatible_element_types()` for type validation (enables custom data types to declare compatibility with existing `Element` types)
+
+### Removed
+- **Breaking**: Remove `zarrs_registry` dependency
+- **Breaking**: Remove `Config::codec_aliases_{v2,v3}()` and `Config::data_type_aliases_{v2,v3}()` methods
+- **Breaking**: Remove `ZfpCodec::new_with_configuration_zfpy()` (use `ZfpyCodec` instead)
+- **Breaking**: Remove `ArraySize` and `{Array,Chunk}Representation::size()` (use `num_elements()` and `element_size()` instead)
+- **Breaking**: Remove DLPack legacy API: `RawBytesDlPack`, `ArrayDlPackExtError`, `AsyncArrayDlPackExt`, `ArrayError::DlPackError`
+- **Breaking**: Remove `array::ArrayRepresentationBase` and `Array::chunk_array_representation()` (use `chunk_shape()`, `data_type()`, `fill_value()`)
+- **Breaking**: Remove `CodecError::DataTypeExtension`, `ArrayError::IncompatibleStartEndIndicesError`, and `IncompatibleStartEndIndicesError`
+- **Breaking**: Remove `indexer` and `array_subset` modules (types re-exported in `array` module)
+- **Breaking**: Remove `Named*` types and methods: `Named[{ArrayToArray,ArrayToBytes,BytesToBytes}]Codec`, `NamedDataType`, `ShardingCodecBuilder::*_named()`, `DataType::into_named()`
+- **Breaking**: Rename `codec_v2_to_v3_name()` to `codec_v2_to_v3()` and change parameter to metadata from name
+- **Breaking**: Remove `ArrayBuilderChunkGrid` type
+- **Breaking**: Remove `array::ArrayBuilder{ChunkGridMetadata,DataType,FillValue}` re-exports
+- **Breaking**: Remove unused `ElementFixedLength` marker trait
+
+### Fixed
+- Fix `transpose` codec decoding with variable-size data types
+- Various fixes to aliased data type handling
+- Fixes handling of Zarr V2 arrays with bool fill values
+- Disallow `zstd` Zarr V2 metadata in V3 arrays
+
+[#280]: https://github.com/zarrs/zarrs/pull/280
+
+## [0.23.0-beta.6] - 2026-01-14
+
+## [0.23.0-beta.5] - 2026-01-13
+
+## [0.23.0-beta.4] - 2026-01-09
+
+## [0.23.0-beta.3] - 2025-12-31
+
+## [0.23.0-beta.2] - 2025-12-31
+
+## [0.23.0-beta.1] - 2025-12-29
+
+## [0.23.0-beta.0] - 2025-12-29
+
+## [0.22.10] - 2025-11-29
+
+### Fixed
+
+- Fix `bz2` codec bounded size
+- Fix `zlib` codec bounded size
+
+## [0.22.9] - 2025-11-27
+
+### Added
+
+- `bytes` fill value can be deserialised from base64 string  ([#304] by [@clbarnes])
+
+[#304]: https://github.com/zarrs/zarrs/pull/304
+
 ## [0.22.8] - 2025-11-14
 
 ### Added
 
 - `Config`: implement `Clone`, `Serialize`, and `Deserialize`
 - `Metadata{Convert,Erase}Version`: Implement `Serialize` and `Deserialize`
-- `bytes` fill value can be deserialised from base64 string
 
 ### Changed
 
@@ -1840,28 +2028,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release
 
-[unreleased]: https://github.com/zarrs/zarrs/compare/zarrs-v0.22.8...HEAD
-[0.22.8]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.22.8
-[0.22.7]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.22.7
-[0.22.6]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.22.6
-[0.22.5]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.22.5
-[0.22.4]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.22.4
-[0.22.3]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.22.3
-[0.22.2]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.22.2
-[0.22.1]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.22.1
-[0.22.0]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.22.0
-[0.22.0-beta.3]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.22.0-beta.3
-[0.22.0-beta.2]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.22.0-beta.2
-[0.22.0-beta.1]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.22.0-beta.1
-[0.22.0-beta.0]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.22.0-beta.0
-[0.21.2]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.21.2
-[0.21.1]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.21.1
-[0.21.0]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.21.0
-[0.20.1]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.20.1
-[0.20.0]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.20.0
-[0.20.0-beta.2]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.20.0-beta.2
-[0.20.0-beta.1]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.20.0-beta.1
-[0.20.0-beta.0]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.20.0-beta.0
+[unreleased]: https://github.com/zarrs/zarrs/compare/zarrs-v0.23.0...HEAD
+[0.23.0]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.0
+[0.23.0-beta.6]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.0-beta.6
+[0.23.0-beta.5]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.0-beta.5
+[0.23.0-beta.4]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.0-beta.4
+[0.23.0-beta.3]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.0-beta.3
+[0.23.0-beta.2]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.0-beta.2
+[0.23.0-beta.1]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.0-beta.1
+[0.23.0-beta.0]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.0-beta.0
+[0.22.10]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.10
+[0.22.9]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.9
+[0.22.8]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.8
+[0.22.7]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.7
+[0.22.6]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.6
+[0.22.5]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.5
+[0.22.4]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.4
+[0.22.3]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.3
+[0.22.2]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.2
+[0.22.1]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.1
+[0.22.0]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.0
+[0.22.0-beta.3]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.0-beta.3
+[0.22.0-beta.2]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.0-beta.2
+[0.22.0-beta.1]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.0-beta.1
+[0.22.0-beta.0]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.22.0-beta.0
+[0.21.2]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.21.2
+[0.21.1]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.21.1
+[0.21.0]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.21.0
+[0.20.1]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.20.1
+[0.20.0]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.20.0
+[0.20.0-beta.2]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.20.0-beta.2
+[0.20.0-beta.1]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.20.0-beta.1
+[0.20.0-beta.0]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.20.0-beta.0
 [0.19.2]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.19.2
 [0.19.1]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.19.1
 [0.19.0]: https://github.com/LDeakin/zarrs/releases/tag/zarrs-v0.19.0
@@ -1928,3 +2126,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [@keller-mark]: https://github.com/keller-mark
 [@mannreis]: https://github.com/mannreis
 [@kylebarron]: https://github.com/kylebarron
+[@clbarnes]: https://github.com/clbarnes

@@ -1,16 +1,16 @@
 //! A synchronous in-memory store.
 
-use bytes::BytesMut;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Mutex;
 
+use bytes::BytesMut;
+
+use crate::byte_range::{ByteOffset, ByteRangeIterator, InvalidByteRangeError};
 use crate::{
-    byte_range::{ByteOffset, ByteRangeIterator, InvalidByteRangeError},
     Bytes, ListableStorageTraits, MaybeBytes, MaybeBytesIterator, OffsetBytesIterator,
     ReadableStorageTraits, StorageError, StoreKey, StoreKeys, StoreKeysPrefixes, StorePrefix,
     WritableStorageTraits,
 };
-
-use std::collections::{BTreeMap, BTreeSet};
 
 /// A synchronous in-memory store.
 #[derive(Debug)]
@@ -191,10 +191,11 @@ impl ListableStorageTraits for MemoryStore {
 
 #[cfg(test)]
 mod tests {
-    use crate::ReadableWritableListableStorageTraits;
+    use std::error::Error;
+    use std::sync::Arc;
 
     use super::*;
-    use std::{error::Error, sync::Arc};
+    use crate::ReadableWritableListableStorageTraits;
 
     #[test]
     fn memory() -> Result<(), Box<dyn Error>> {
@@ -202,6 +203,7 @@ mod tests {
         crate::store_test::store_write(&store)?;
         crate::store_test::store_read(&store)?;
         crate::store_test::store_list(&store)?;
+        crate::store_test::store_list_size(&store)?;
         Ok(())
     }
 
@@ -211,6 +213,7 @@ mod tests {
         crate::store_test::store_write(&store.clone().writable())?;
         crate::store_test::store_read(&store.clone().readable())?;
         crate::store_test::store_list(&store.clone().listable())?;
+        crate::store_test::store_list_size(&store.clone().listable())?;
         Ok(())
     }
 
@@ -228,6 +231,7 @@ mod tests {
         crate::store_test::store_write(&store.clone().writable())?;
         crate::store_test::store_read(&store.clone().readable_listable().readable())?;
         crate::store_test::store_list(&store.clone().readable_listable().listable())?;
+        crate::store_test::store_list_size(&store.clone().readable_listable().listable())?;
         Ok(())
     }
 }

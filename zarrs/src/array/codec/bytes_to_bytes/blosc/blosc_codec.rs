@@ -1,29 +1,35 @@
-use std::{borrow::Cow, sync::Arc};
+use std::borrow::Cow;
+use std::ffi::c_char;
+use std::sync::Arc;
 
 use blusc::{blosc2_get_complib_info, BLOSC2_MAX_OVERHEAD};
 use zarrs_metadata::Configuration;
-use zarrs_registry::codec::BLOSC;
+use zarrs_plugin::ZarrVersion;
 
 use crate::{
     array::{
-        codec::{
-            BytesPartialDecoderTraits, BytesToBytesCodecTraits, CodecError, CodecMetadataOptions,
-            CodecOptions, CodecTraits, PartialDecoderCapability, PartialEncoderCapability,
-            RecommendedConcurrency,
-        },
-        BytesRepresentation, RawBytes,
+        BytesRepresentation, ArrayBytesRaw,
+        codec::bytes_to_bytes::blosc::BloscError,
     },
-    plugin::PluginCreateError,
+};
+use zarrs_metadata_ext::codec::blosc::{
+    BloscCodecConfiguration, BloscCodecConfigurationNumcodecs, BloscCodecConfigurationV1,
+    BloscCompressionLevel, BloscCompressor, BloscShuffleMode, BloscShuffleModeNumcodecs,
 };
 
-#[cfg(feature = "async")]
-use crate::array::codec::AsyncBytesPartialDecoderTraits;
 
 use super::{
     blosc_compress_bytes, blosc_decompress_bytes, blosc_partial_decoder, blosc_validate,
-    compressor_as_str, BloscCodecConfiguration, BloscCodecConfigurationV1, BloscCompressionLevel,
-    BloscCompressor, BloscError, BloscShuffleMode,
+    compressor_as_str,
 };
+#[cfg(feature = "async")]
+use zarrs_codec::AsyncBytesPartialDecoderTraits;
+use zarrs_codec::{
+    BytesPartialDecoderTraits, BytesToBytesCodecTraits, CodecError, CodecMetadataOptions,
+    CodecOptions, CodecTraits, PartialDecoderCapability, PartialEncoderCapability,
+    RecommendedConcurrency,
+};
+use zarrs_plugin::PluginCreateError;
 
 /// A `blosc` codec implementation.
 #[derive(Clone, Debug)]
@@ -139,29 +145,49 @@ impl BloscCodec {
 }
 
 impl CodecTraits for BloscCodec {
-    fn identifier(&self) -> &str {
-        BLOSC
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 
-    fn configuration_opt(
+    fn configuration(
         &self,
-        _name: &str,
+        version: ZarrVersion,
         _options: &CodecMetadataOptions,
     ) -> Option<Configuration> {
-        let configuration = BloscCodecConfiguration::V1(BloscCodecConfigurationV1 {
-            cname: self.cname,
-            clevel: self.clevel,
-            shuffle: self.shuffle_mode.unwrap_or_else(|| {
-                if self.typesize.unwrap_or_default() > 0 {
-                    BloscShuffleMode::BitShuffle
-                } else {
-                    BloscShuffleMode::NoShuffle
-                }
-            }),
-            typesize: self.typesize,
-            blocksize: self.blocksize,
+        let shuffle = self.shuffle_mode.unwrap_or_else(|| {
+            if self.typesize.unwrap_or_default() > 0 {
+                BloscShuffleMode::BitShuffle
+            } else {
+                BloscShuffleMode::NoShuffle
+            }
         });
-        Some(configuration.into())
+        match version {
+            ZarrVersion::V2 => {
+                let shuffle = match shuffle {
+                    BloscShuffleMode::NoShuffle => BloscShuffleModeNumcodecs::NoShuffle,
+                    BloscShuffleMode::Shuffle => BloscShuffleModeNumcodecs::Shuffle,
+                    BloscShuffleMode::BitShuffle => BloscShuffleModeNumcodecs::BitShuffle,
+                };
+                let configuration =
+                    BloscCodecConfiguration::Numcodecs(BloscCodecConfigurationNumcodecs {
+                        cname: self.cname,
+                        clevel: self.clevel,
+                        shuffle,
+                        blocksize: self.blocksize,
+                    });
+                Some(configuration.into())
+            }
+            ZarrVersion::V3 => {
+                let configuration = BloscCodecConfiguration::V1(BloscCodecConfigurationV1 {
+                    cname: self.cname,
+                    clevel: self.clevel,
+                    shuffle,
+                    typesize: self.typesize,
+                    blocksize: self.blocksize,
+                });
+                Some(configuration.into())
+            }
+        }
     }
 
     fn partial_decoder_capability(&self) -> PartialDecoderCapability {
@@ -198,9 +224,9 @@ impl BytesToBytesCodecTraits for BloscCodec {
 
     fn encode<'a>(
         &self,
-        decoded_value: RawBytes<'a>,
+        decoded_value: ArrayBytesRaw<'a>,
         _options: &CodecOptions,
-    ) -> Result<RawBytes<'a>, CodecError> {
+    ) -> Result<ArrayBytesRaw<'a>, CodecError> {
         // let n_threads = std::cmp::min(
         //     options.concurrent_limit(),
         //     std::thread::available_parallelism().unwrap(),
@@ -212,10 +238,10 @@ impl BytesToBytesCodecTraits for BloscCodec {
 
     fn decode<'a>(
         &self,
-        encoded_value: RawBytes<'a>,
+        encoded_value: ArrayBytesRaw<'a>,
         _decoded_representation: &BytesRepresentation,
         _options: &CodecOptions,
-    ) -> Result<RawBytes<'a>, CodecError> {
+    ) -> Result<ArrayBytesRaw<'a>, CodecError> {
         // let n_threads = std::cmp::min(
         //     options.concurrent_limit(),
         //     std::thread::available_parallelism().unwrap(),
