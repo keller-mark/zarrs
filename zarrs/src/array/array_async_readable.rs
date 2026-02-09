@@ -277,8 +277,6 @@ impl<TStorage: ?Sized + AsyncReadableStorageTraits + 'static> Array<TStorage> {
             .await
     }
 
-<<<<<<< HEAD
-=======
     /// Async variant of [`retrieve_array_subset_into`](Array::retrieve_array_subset_into).
     #[allow(clippy::missing_errors_doc)]
     pub async fn async_retrieve_array_subset_into(
@@ -290,7 +288,6 @@ impl<TStorage: ?Sized + AsyncReadableStorageTraits + 'static> Array<TStorage> {
             .await
     }
 
->>>>>>> e1883665d24e877e287c00bbfd9ed7c7155a1e1a
     #[deprecated(
         since = "0.23.0",
         note = "Use async_retrieve_array_subset::<Vec<T>>() instead"
@@ -860,8 +857,6 @@ impl<TStorage: ?Sized + AsyncReadableStorageTraits + 'static> Array<TStorage> {
         }
     }
 
-<<<<<<< HEAD
-=======
     /// Async variant of [`retrieve_array_subset_into_opt`](Array::retrieve_array_subset_into_opt).
     #[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
     pub async fn async_retrieve_array_subset_into_opt(
@@ -1014,7 +1009,6 @@ impl<TStorage: ?Sized + AsyncReadableStorageTraits + 'static> Array<TStorage> {
         Ok(())
     }
 
->>>>>>> e1883665d24e877e287c00bbfd9ed7c7155a1e1a
     #[deprecated(
         since = "0.23.0",
         note = "Use async_retrieve_array_subset_opt::<Vec<T>>() instead"
