@@ -131,6 +131,10 @@ fn blosc_compress_bytes(
         1
     };
 
+    println!("src contents: {:?}", src);
+
+    println!("blosc_compress_bytes(src len: {}, clevel: {:?}, shuffle_mode: {:?}, typesize: {}, compressor: {:?}, blocksize: {}, numinternalthreads: {})", src.len(), clevel, shuffle_mode, typesize, compressor, blocksize, numinternalthreads);
+
     // let mut dest = vec![0; src.len() + BLOSC_MAX_OVERHEAD as usize];
     let destsize = src.len() + BLOSC2_MAX_OVERHEAD as usize;
     let mut dest: Vec<u8> = vec![0; destsize];
@@ -143,10 +147,10 @@ fn blosc_compress_bytes(
         cparams.compcode = match compressor {
             BloscCompressor::BloscLZ => 0,
             BloscCompressor::LZ4 => 1,
-            BloscCompressor::LZ4HC => 1,
-            BloscCompressor::Snappy => 2,
-            BloscCompressor::Zlib => 3,
-            BloscCompressor::Zstd => 4,
+            BloscCompressor::LZ4HC => 2,
+            BloscCompressor::Snappy => 3,
+            BloscCompressor::Zlib => 4,
+            BloscCompressor::Zstd => 5,
         };
         cparams.filters[5] = match shuffle_mode {
             BloscShuffleMode::NoShuffle => 0,
