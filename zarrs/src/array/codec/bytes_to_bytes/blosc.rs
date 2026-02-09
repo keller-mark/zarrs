@@ -42,7 +42,6 @@ mod blosc_partial_decoder;
 /// and the output length needed to run `blosc_decompress_bytes` in parallel.
 /// Otherwise, these functions will use one thread regardless of the `numinternalthreads` parameter.
 const MIN_PARALLEL_LENGTH: usize = 4_000_000;
-use std::ffi::{c_char, c_int, c_void};
 use std::sync::Arc;
 
 pub use blosc_codec::BloscCodec;

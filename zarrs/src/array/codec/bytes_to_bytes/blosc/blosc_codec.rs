@@ -1,27 +1,17 @@
 use std::borrow::Cow;
-use std::ffi::c_char;
 use std::sync::Arc;
 
 use blusc::{blosc2_get_complib_info, BLOSC2_MAX_OVERHEAD};
 use zarrs_metadata::Configuration;
 use zarrs_plugin::ZarrVersion;
 
-use crate::{
-    array::{
-        BytesRepresentation, ArrayBytesRaw,
-        codec::bytes_to_bytes::blosc::BloscError,
-    },
-};
-use zarrs_metadata_ext::codec::blosc::{
-    BloscCodecConfiguration, BloscCodecConfigurationNumcodecs, BloscCodecConfigurationV1,
-    BloscCompressionLevel, BloscCompressor, BloscShuffleMode, BloscShuffleModeNumcodecs,
-};
-
-
 use super::{
-    blosc_compress_bytes, blosc_decompress_bytes, blosc_partial_decoder, blosc_validate,
-    compressor_as_str,
+    BloscCodecConfiguration, BloscCodecConfigurationNumcodecs, BloscCodecConfigurationV1,
+    BloscCompressionLevel, BloscCompressor, BloscError, BloscShuffleMode,
+    BloscShuffleModeNumcodecs, blosc_compress_bytes, blosc_decompress_bytes, blosc_partial_decoder,
+    blosc_validate, compressor_as_str,
 };
+use crate::array::{ArrayBytesRaw, BytesRepresentation};
 #[cfg(feature = "async")]
 use zarrs_codec::AsyncBytesPartialDecoderTraits;
 use zarrs_codec::{
