@@ -2033,12 +2033,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release
 
-<<<<<<< HEAD
-[unreleased]: https://github.com/zarrs/zarrs/compare/zarrs-v0.23.0...HEAD
-=======
 [unreleased]: https://github.com/zarrs/zarrs/compare/zarrs-v0.23.1...HEAD
 [0.23.1]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.1
->>>>>>> e1883665d24e877e287c00bbfd9ed7c7155a1e1a
 [0.23.0]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.0
 [0.23.0-beta.6]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.0-beta.6
 [0.23.0-beta.5]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.0-beta.5
