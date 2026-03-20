@@ -7,10 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.7] - 2026-03-21
+
 ### Added
-- Subchunks can now be written in C-major order via `ShardingCodecOptions.{set_,with_,}subchunk_write_order`
-- Add `Array::with_codec_specific_options` and `Array::set_codec_specific_options` to reconfigure codec chains with `CodecSpecificOptions`
 - Add `ShardingCodecOptions` for runtime configuration of the sharding codec
+  - Subchunks can now be written in C-major order via `ShardingCodecOptions.{set_,with_,}subchunk_write_order` (by [@ilan-gold])
+- Add `Array::with_codec_specific_options` and `Array::set_codec_specific_options` to reconfigure codec chains with `CodecSpecificOptions`
 - Add `CodecChain::with_codec_specific_options`
 
 ### Changed
@@ -2072,7 +2074,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release
 
-[unreleased]: https://github.com/zarrs/zarrs/compare/zarrs-v0.23.6...HEAD
+[unreleased]: https://github.com/zarrs/zarrs/compare/zarrs-v0.23.7...HEAD
+[0.23.7]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.7
 [0.23.6]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.6
 [0.23.5]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.5
 [0.23.4]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.4
