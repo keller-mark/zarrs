@@ -351,9 +351,9 @@ mod tests {
 }"#;
 
     enum FillValueAmount {
-        PartialFill,
-        AllFill,
-        NoFill,
+        Partial,
+        All,
+        None,
     }
 
     fn codec_sharding_round_trip_impl(
@@ -373,14 +373,12 @@ mod tests {
         let fill_value = FillValue::from(0u16);
         let elem_size = std::mem::size_of::<u16>();
         let elements: Vec<u16> = match fill_value_amount {
-            FillValueAmount::AllFill => vec![0u16; chunk_shape.num_elements_usize()],
-            FillValueAmount::PartialFill => {
+            FillValueAmount::All => vec![0u16; chunk_shape.num_elements_usize()],
+            FillValueAmount::Partial => {
                 // Two separate subsets, one entirely within a subchunk, other other crossing a boundary.
                 // Three total chunks thus are written two..
-                let subset1 =
-                    ArraySubset::new_with_ranges(&[(0..2 as u64), (0..2 as u64), (0..2 as u64)]);
-                let subset2 =
-                    ArraySubset::new_with_ranges(&[(5..7 as u64), (0..2 as u64), (0..2 as u64)]);
+                let subset1 = ArraySubset::new_with_ranges(&[(0..2), (0..2), (0..2)]);
+                let subset2 = ArraySubset::new_with_ranges(&[(5..7), (0..2), (0..2)]);
                 let mut data = vec![0u16; chunk_shape.num_elements_usize()];
                 subset1
                     .iter_contiguous_byte_ranges(&[chunk_size; NUM_AXES], 2)
@@ -400,7 +398,7 @@ mod tests {
                     });
                 data
             }
-            FillValueAmount::NoFill => (1..(1 + chunk_shape.num_elements_usize() as u16)).collect(),
+            FillValueAmount::None => (1..(1 + chunk_shape.num_elements_usize() as u16)).collect(),
         };
         let bytes = crate::array::transmute_to_bytes_vec(elements);
         let bytes: ArrayBytes = bytes.into();
@@ -448,7 +446,7 @@ mod tests {
             )
             .unwrap();
         match fill_value_amount {
-            FillValueAmount::NoFill => match codec.options.subchunk_write_order() {
+            FillValueAmount::None => match codec.options.subchunk_write_order() {
                 SubchunkWriteOrder::Random => (),
                 SubchunkWriteOrder::C => {
                     let mut offset_with_len = index.chunks(2).collect::<Vec<&[u64]>>();
@@ -457,17 +455,13 @@ mod tests {
                     assert_eq!(
                         offset_with_len
                             .into_iter()
-                            .map(|e| e.to_vec().into_iter())
-                            .flatten()
+                            .flat_map(|e| e.iter().copied())
                             .collect::<Vec<u64>>(),
                         index
                     );
                 }
-                _ => {
-                    unreachable!("C and Random order are the only supported subchunk write orders")
-                }
             },
-            FillValueAmount::PartialFill => match codec.options.subchunk_write_order() {
+            FillValueAmount::Partial => match codec.options.subchunk_write_order() {
                 SubchunkWriteOrder::Random => (),
                 SubchunkWriteOrder::C => {
                     // The sorted index with unwritten elements filtered matches that of the real index
@@ -480,8 +474,7 @@ mod tests {
                     assert_eq!(
                         offset_with_len
                             .into_iter()
-                            .map(|e| e.to_vec().into_iter())
-                            .flatten()
+                            .flat_map(|e| e.iter().copied())
                             .collect::<Vec<u64>>(),
                         filtered_index
                     );
@@ -489,11 +482,8 @@ mod tests {
                     // 2 times that for offset + len per chunk.
                     assert_eq!(filtered_index.len(), 6);
                 }
-                _ => {
-                    unreachable!("C and Random order are the only supported subchunk write orders")
-                }
             },
-            FillValueAmount::AllFill => assert_eq!(index, vec![u64::MAX; 8 * 8 * 8 * 2]),
+            FillValueAmount::All => assert_eq!(index, vec![u64::MAX; 8 * 8 * 8 * 2]),
         }
     }
 
@@ -502,9 +492,9 @@ mod tests {
         for subchunk_write_order in [SubchunkWriteOrder::C, SubchunkWriteOrder::Random] {
             for index_at_end in [true, false] {
                 for fill_value_amount in [
-                    FillValueAmount::AllFill,
-                    FillValueAmount::NoFill,
-                    FillValueAmount::PartialFill,
+                    FillValueAmount::All,
+                    FillValueAmount::None,
+                    FillValueAmount::Partial,
                 ] {
                     for unbounded in [true, false] {
                         for parallel in [true, false] {
@@ -534,9 +524,9 @@ mod tests {
         for subchunk_write_order in [SubchunkWriteOrder::C, SubchunkWriteOrder::Random] {
             for index_at_end in [true, false] {
                 for fill_value_amount in [
-                    FillValueAmount::AllFill,
-                    FillValueAmount::NoFill,
-                    FillValueAmount::PartialFill,
+                    FillValueAmount::All,
+                    FillValueAmount::None,
+                    FillValueAmount::Partial,
                 ] {
                     for unbounded in [true, false] {
                         for parallel in [true, false] {
