@@ -14,11 +14,12 @@ categories = ["encoding", "science"]
 exclude = [".github/", "doc/TODO.md", "tests/"]
 
 [features]
-default = ["filesystem", "ndarray", "blosc", "crc32c", "gzip", "sharding", "transpose", "zstd"]
+default = ["filesystem", "ndarray", "blosc-wasm", "crc32c", "gzip", "sharding", "transpose", "zstd-wasm"]
 filesystem = ["dep:zarrs_filesystem"] # Re-export zarrs_filesystem as zarrs::filesystem
 adler32 = ["dep:simd-adler32"] # Enable the adler32 checksum codec
 bitround = [] # Enable the bitround codec
-blosc = ["dep:blusc"] # Enable the blosc codec
+blosc = ["dep:blosc-src"] # Enable the blosc codec
+blosc-wasm = ["dep:blusc"] # Enable the blosc codec via blusc for wasm
 bz2 = ["dep:bzip2"] # Enable the bz2 codec
 crc32c = ["dep:crc32c"] # Enable the crc32c checksum codec
 fletcher32 = [] # Enable the fletcher32 checksum codec
@@ -29,7 +30,8 @@ sharding = [] # Enable the sharding codec
 transpose = ["dep:ndarray"] # Enable the transpose codec
 zfp = ["dep:zfp-sys"] # Enable the zfp codec
 zlib = ["dep:flate2"] # Enable the zlib codec
-zstd = ["dep:zstd", "dep:zstd-sys"] # Enable the zstd codec
+zstd = ["dep:zstd"] # Enable the zstd codec
+zstd-wasm = ["dep:zstd", "dep:zstd-sys"] # Enable the zstd codec
 ndarray = ["dep:ndarray"] # Adds ndarray utility functions to Array
 dlpack =["dep:dlpark"] # Adds dlpack utility functions to Array
 async = ["dep:async-generic", "dep:async-trait", "dep:futures", "moka/future", "zarrs_storage/async", "zarrs_codec/async"] # Enable experimental async API
@@ -49,9 +51,8 @@ bench = false
 
 [dependencies]
 async-trait = { version = "0.1.74", optional = true }
-#blosc-src = { path = "../../rust-blosc-src", features = ["lz4", "zlib", "zstd"], optional = true }
-# blosc2-src = { version = "0.1.3", features = ["zstd"], optional = true }
-blusc = { path = "../../blusc", features = [], optional = true }
+blosc-src = { version = "0.3.6", features = ["snappy", "lz4", "zlib", "zstd"], optional = true }
+blusc = { version = "0.0.2", features = [], optional = true }
 bytemuck = { version = "1.14.0", features = ["extern_crate_alloc", "must_cast", "min_const_generics"] }
 bytes = "1.7.0"
 bzip2 = { version = "0.6.0", optional = true }
@@ -91,7 +92,6 @@ zstd = { version = "*", features = [
     "thin",
 ], default-features = false, optional = true }
 zstd-sys = { version = "=2.0.9", optional = true, default-features = false }
-
 zfp-sys = {version = "0.4.2", features = ["static"], optional = true }
 dlpark = { version = "0.6.0", features = ["half"], optional = true }
 async-generic = { version = "1.1.2", optional = true }
@@ -107,9 +107,11 @@ base64 = "0.22.1"
 zarrs_chunk_grid.workspace = true
 zarrs_codec.workspace = true
 
+
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 quick_cache = { version = "0.6.16" }
 uuid = { version = "^1.1.0", features = ["v4", "js"] }
+
 
 # Reference: https://github.com/kylebarron/parquet-wasm/blob/ad18b841a8e788b0d4b17eb9deaca581d02bf887/Cargo.toml#L100C1-L110C18
 [target.'cfg(target_arch = "wasm32")'.dependencies.getrandom_v03]

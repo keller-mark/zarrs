@@ -18,7 +18,7 @@ zarrs = { path = "../zarrs", features = [
     "filesystem",
     "adler32",
     "bitround",
-    "blosc",
+    "blosc-wasm",
     "bz2",
     "crc32c",
     "fletcher32",
@@ -29,7 +29,7 @@ zarrs = { path = "../zarrs", features = [
     "transpose",
     "zfp",
     "zlib",
-    "zstd",
+    "zstd-wasm",
 ] }
 clap = { version = "4.5.53", features = ["derive"] }
 anyhow = "1.0.100"
