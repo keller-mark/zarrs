@@ -154,6 +154,7 @@ impl ArrayShardedReadableExtCache {
                     &sharding_codec.index_codecs,
                     sharding_codec.index_location,
                     &CodecOptions::default(),
+                    sharding_codec.options.clone(),
                 )?));
             // // TODO: Trait upcasting
             // let partial_decoder = array
@@ -745,7 +746,6 @@ mod tests {
 
             cache.clear();
             assert_eq!(cache.len(), 0);
-
             let subset = ArraySubset::new_with_ranges(&[3..7, 3..7]);
             let compare = array.retrieve_array_subset::<Vec<u16>>(&subset)?;
             let test = array.retrieve_array_subset_sharded_opt::<Vec<u16>>(

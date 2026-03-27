@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.8] - 2026-03-26
+
+### Added
+- Add `rectilinear` chunk grid
+
+### Changed
+- Bump `zarrs_metadata_ext` to 0.4.2
+- Replace `rectangular_array_write_read` example with `rectilinear_chunk_grid`
+
+## [0.23.7] - 2026-03-21
+
+### Added
+- Add `ShardingCodecOptions` for runtime configuration of the sharding codec
+  - Subchunks can now be written in C-major order via `ShardingCodecOptions.{set_,with_,}subchunk_write_order` (by [@ilan-gold])
+- Add `Array::with_codec_specific_options` and `Array::set_codec_specific_options` to reconfigure codec chains with `CodecSpecificOptions`
+- Add `CodecChain::with_codec_specific_options`
+
+### Changed
+- Bump `zarrs_codec` to 0.2.1
+
+## [0.23.6] - 2026-03-08
+
+### Changed
+- Avoid a potential copy in `ShardingPartialDecoder::partial_decode_into`
+- Bump `zarrs_chunk_grid` to 0.5.1
+
+## [0.23.5] - 2026-03-03
+
+### Changed
+- Avoid a potential copy in `ShardingCodec::decode`
+- Bump `zarrs_storage` to 0.4.3
+
+### Fixed
+- Fixed missing `ndarray` feature gate for `async_store_chunk_subset_ndarray_opt`
+
+## [0.23.4] - 2026-02-28
+
+### Fixed
+- Fix enabling `array_async_sharded_readable_ext` module without the `sharding` feature
+
+## [0.23.3] - 2026-02-21
+
+### Fixed
+- Fix `CodecChain` internal validation of decoded bytes with an array-to-array codec that changes the data type
+
+## [0.23.2] - 2026-02-17
+
+### Fixed
+- Restore `i64` `Element[Owned]` support for `numpy.{datetime64,timedelta64}` (broken in 0.23.0)
+
 ## [0.23.1] - 2026-02-08
 
 ### Added
@@ -2033,7 +2083,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial public release
 
-[unreleased]: https://github.com/zarrs/zarrs/compare/zarrs-v0.23.1...HEAD
+[unreleased]: https://github.com/zarrs/zarrs/compare/zarrs-v0.23.8...HEAD
+[0.23.8]: https://github.com/zarrs/zarrs/compare/zarrs-v0.23.7...zarrs-v0.23.8
+[0.23.7]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.7
+[0.23.6]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.6
+[0.23.5]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.5
+[0.23.4]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.4
+[0.23.3]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.3
+[0.23.2]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.2
 [0.23.1]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.1
 [0.23.0]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.0
 [0.23.0-beta.6]: https://github.com/zarrs/zarrs/releases/tag/zarrs-v0.23.0-beta.6
