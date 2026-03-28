@@ -2,7 +2,7 @@
 
 #[cfg(feature = "adler32")]
 pub mod adler32;
-#[cfg(any(feature = "blosc", feature = "blosc-wasm"))]
+#[cfg(feature = "blosc")]
 pub mod blosc;
 #[cfg(feature = "bz2")]
 pub mod bz2;
