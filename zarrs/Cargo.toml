@@ -14,7 +14,7 @@ categories = ["encoding", "science"]
 exclude = [".github/", "doc/TODO.md", "tests/"]
 
 [features]
-default = ["filesystem", "ndarray", "blosc-wasm", "crc32c", "gzip", "sharding", "transpose", "zstd-wasm"]
+default = ["filesystem", "ndarray", "blosc", "crc32c", "gzip", "sharding", "transpose", "zstd"]
 filesystem = ["dep:zarrs_filesystem"] # Re-export zarrs_filesystem as zarrs::filesystem
 adler32 = ["dep:simd-adler32"] # Enable the adler32 checksum codec
 bitround = [] # Enable the bitround codec
@@ -83,6 +83,7 @@ zarrs_data_type.workspace = true
 zarrs_metadata.workspace = true
 zarrs_plugin.workspace = true
 zarrs_storage.workspace = true
+#zstd = { version = "0.13.3", features = ["zstdmt", "experimental"], optional = true }
 # References:
 # - https://github.com/kylebarron/parquet-wasm/blob/d9e9e1f0762e8a4c1c710f66550f00c3534d350f/Cargo.toml#L87C1-L92C77
 # - https://github.com/kylebarron/parquet-wasm/blob/main/DEVELOP.md#macos
