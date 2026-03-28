@@ -42,7 +42,8 @@
 const MIN_PARALLEL_LENGTH: usize = 4_000_000;
 use std::sync::Arc;
 
-pub use blosc_codec::BloscCodec;
+
+pub use blosc::blosc_codec::BloscCodec;
 use blusc::{
     blosc1_cbuffer_metainfo, blosc1_cbuffer_sizes, blosc1_cbuffer_validate, blosc1_getitem,
     blosc2_compress_ctx, blosc2_create_cctx, blosc2_create_dctx, blosc2_decompress_ctx,

@@ -44,7 +44,7 @@ const MIN_PARALLEL_LENGTH: usize = 4_000_000;
 use std::ffi::{c_char, c_int, c_void};
 use std::sync::Arc;
 
-pub use blosc_codec::BloscCodec;
+pub use blosc::blosc_codec::BloscCodec;
 use blosc_src::{
     BLOSC_MAX_OVERHEAD, BLOSC_MAX_THREADS, blosc_cbuffer_metainfo, blosc_cbuffer_sizes,
     blosc_cbuffer_validate, blosc_compress_ctx, blosc_decompress_ctx, blosc_getitem,
