@@ -51,7 +51,7 @@ bench = false
 [dependencies]
 async-trait = { version = "0.1.74", optional = true }
 blosc-src = { version = "0.3.6", features = ["snappy", "lz4", "zlib", "zstd"], optional = true }
-blusc = { version = "0.0.3", features = [], optional = true }
+blusc = { version = "0.0.4", features = [], optional = true }
 bytemuck = { version = "1.14.0", features = ["extern_crate_alloc", "must_cast", "min_const_generics"] }
 bytes = "1.7.0"
 bzip2 = { version = "0.6.0", optional = true }
@@ -107,12 +107,12 @@ zarrs_chunk_grid.workspace = true
 zarrs_codec.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-zstd = { version = "0.13.0", features = ["zstdmt", "experimental"], optional = true }
+zstd = { version = "0.13.3", features = ["zstdmt", "experimental"], optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 quick_cache = { version = "0.6.16" }
 uuid = { version = "^1.1.0", features = ["v4", "js"] }
-zstd = { version = "0.13.0", optional = true }
+zstd = { version = "0.13.3", optional = true }
 
 
 # Reference: https://github.com/kylebarron/parquet-wasm/blob/ad18b841a8e788b0d4b17eb9deaca581d02bf887/Cargo.toml#L100C1-L110C18
