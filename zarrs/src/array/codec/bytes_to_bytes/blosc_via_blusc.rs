@@ -41,7 +41,7 @@
 const MIN_PARALLEL_LENGTH: usize = 4_000_000;
 use std::sync::Arc;
 
-pub use blosc_codec::BloscCodec;
+pub use super::blosc_codec::BloscCodec;
 use blusc::{
     // For compression
     BLOSC2_CPARAMS_DEFAULTS,

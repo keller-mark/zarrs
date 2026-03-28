@@ -52,7 +52,7 @@ use thiserror::Error;
 use zarrs_metadata::v2::MetadataV2;
 use zarrs_metadata::v3::MetadataV3;
 
-use super::BloscCodec;
+use super::blosc_codec::BloscCodec;
 use zarrs_codec::{Codec, CodecTraitsV2, CodecTraitsV3};
 pub use zarrs_metadata_ext::codec::blosc::{
     BloscCodecConfiguration, BloscCodecConfigurationNumcodecs, BloscCodecConfigurationV1,
