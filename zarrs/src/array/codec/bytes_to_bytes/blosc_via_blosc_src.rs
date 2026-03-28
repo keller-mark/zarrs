@@ -90,6 +90,7 @@ impl CodecTraitsV2 for BloscCodec {
 
 #[derive(Clone, Debug, Error, From)]
 #[error("{0}")]
+/// An error from the blosc codec.
 pub struct BloscError(String);
 
 impl From<&str> for BloscError {
@@ -109,6 +110,7 @@ pub(super) const fn compressor_as_cstr(compressor: BloscCompressor) -> *const u8
     }
 }
 
+/// Compress bytes using blosc.
 pub fn blosc_compress_bytes(
     src: &[u8],
     clevel: BloscCompressionLevel,
@@ -158,6 +160,7 @@ pub fn blosc_compress_bytes(
     }
 }
 
+/// Validate a blosc buffer and return the decompressed size, or `None` if invalid.
 pub fn blosc_validate(src: &[u8]) -> Option<usize> {
     let mut destsize: usize = 0;
     let valid = unsafe {
@@ -202,6 +205,7 @@ pub fn blosc_nbytes(src: &[u8]) -> Option<usize> {
     (uncompressed_bytes > 0 && cbytes > 0 && blocksize > 0).then_some(uncompressed_bytes)
 }
 
+/// Decompress a blosc buffer.
 pub fn blosc_decompress_bytes(
     src: &[u8],
     destsize: usize,
@@ -233,6 +237,7 @@ pub fn blosc_decompress_bytes(
     }
 }
 
+/// Partially decompress a blosc buffer at a given byte offset and length.
 pub fn blosc_decompress_bytes_partial(
     src: &[u8],
     offset: usize,
