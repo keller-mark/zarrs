@@ -35,7 +35,6 @@
 // NOTE: Zarr implementations MAY provide users an option to choose a shuffle mode automatically based on the typesize or other information, but MUST record in the metadata the mode that is chosen.
 // TODO: Need to validate blosc typesize matches element size and also that endianness is specified if typesize > 1
 
-
 /// The input length needed to to run `blosc_compress_bytes` in parallel,
 /// and the output length needed to run `blosc_decompress_bytes` in parallel.
 /// Otherwise, these functions will use one thread regardless of the `numinternalthreads` parameter.
@@ -53,13 +52,13 @@ use thiserror::Error;
 use zarrs_metadata::v2::MetadataV2;
 use zarrs_metadata::v3::MetadataV3;
 
+use super::BloscCodec;
 use zarrs_codec::{Codec, CodecPluginV2, CodecPluginV3, CodecTraitsV2, CodecTraitsV3};
 pub use zarrs_metadata_ext::codec::blosc::{
     BloscCodecConfiguration, BloscCodecConfigurationNumcodecs, BloscCodecConfigurationV1,
     BloscCompressionLevel, BloscCompressor, BloscShuffleMode, BloscShuffleModeNumcodecs,
 };
 use zarrs_plugin::PluginCreateError;
-use super::BloscCodec;
 
 zarrs_plugin::impl_extension_aliases!(BloscCodec, v3: "blosc", v2: "blosc");
 

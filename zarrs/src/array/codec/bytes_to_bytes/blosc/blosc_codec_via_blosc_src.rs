@@ -5,13 +5,13 @@ use std::sync::Arc;
 use blosc_src::{BLOSC_MAX_OVERHEAD, blosc_get_complib_info};
 use zarrs_plugin::ZarrVersion;
 
+use super::super::blosc_impl::compressor_as_cstr;
 use super::super::{
     BloscCodecConfiguration, BloscCodecConfigurationNumcodecs, BloscCodecConfigurationV1,
     BloscCompressionLevel, BloscCompressor, BloscError, BloscShuffleMode,
-    BloscShuffleModeNumcodecs, blosc_compress_bytes, blosc_decompress_bytes, blosc_validate,
-    blosc_partial_decoder,
+    BloscShuffleModeNumcodecs, blosc_compress_bytes, blosc_decompress_bytes, blosc_partial_decoder,
+    blosc_validate,
 };
-use super::super::blosc_impl::compressor_as_cstr;
 use crate::array::{ArrayBytesRaw, BytesRepresentation};
 #[cfg(feature = "async")]
 use zarrs_codec::AsyncBytesPartialDecoderTraits;

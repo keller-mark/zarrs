@@ -35,23 +35,27 @@
 // NOTE: Zarr implementations MAY provide users an option to choose a shuffle mode automatically based on the typesize or other information, but MUST record in the metadata the mode that is chosen.
 // TODO: Need to validate blosc typesize matches element size and also that endianness is specified if typesize > 1
 
-
 /// The input length needed to to run `blosc_compress_bytes` in parallel,
 /// and the output length needed to run `blosc_decompress_bytes` in parallel.
 /// Otherwise, these functions will use one thread regardless of the `numinternalthreads` parameter.
 const MIN_PARALLEL_LENGTH: usize = 4_000_000;
 use std::sync::Arc;
 
-
 pub use blosc_codec::BloscCodec;
 use blusc::{
-    blosc1_cbuffer_metainfo, blosc1_cbuffer_sizes, blosc1_cbuffer_validate, blosc1_getitem,
-    blosc2_compress_ctx, blosc2_create_cctx, blosc2_create_dctx, blosc2_decompress_ctx,
     // For compression
     BLOSC2_CPARAMS_DEFAULTS,
     BLOSC2_DPARAMS_DEFAULTS,
     BLOSC2_MAX_OVERHEAD,
     // For decompression
+    blosc1_cbuffer_metainfo,
+    blosc1_cbuffer_sizes,
+    blosc1_cbuffer_validate,
+    blosc1_getitem,
+    blosc2_compress_ctx,
+    blosc2_create_cctx,
+    blosc2_create_dctx,
+    blosc2_decompress_ctx,
 };
 use derive_more::From;
 use thiserror::Error;
@@ -131,7 +135,16 @@ pub fn blosc_compress_bytes(
 
     println!("src contents: {:?}", src);
 
-    println!("blosc_compress_bytes(src len: {}, clevel: {:?}, shuffle_mode: {:?}, typesize: {}, compressor: {:?}, blocksize: {}, numinternalthreads: {})", src.len(), clevel, shuffle_mode, typesize, compressor, blocksize, numinternalthreads);
+    println!(
+        "blosc_compress_bytes(src len: {}, clevel: {:?}, shuffle_mode: {:?}, typesize: {}, compressor: {:?}, blocksize: {}, numinternalthreads: {})",
+        src.len(),
+        clevel,
+        shuffle_mode,
+        typesize,
+        compressor,
+        blocksize,
+        numinternalthreads
+    );
 
     // let mut dest = vec![0; src.len() + BLOSC_MAX_OVERHEAD as usize];
     let destsize = src.len() + BLOSC2_MAX_OVERHEAD as usize;
