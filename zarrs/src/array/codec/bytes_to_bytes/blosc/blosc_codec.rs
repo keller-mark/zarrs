@@ -6,9 +6,4 @@ mod blosc_codec_impl;
 #[path = "blosc_codec_via_blusc.rs"]
 mod blosc_codec_impl;
 
-pub use blosc_codec_impl::{
-    BloscCodec, BloscCodecConfiguration, BloscCodecConfigurationNumcodecs, BloscCodecConfigurationV1,
-    BloscCompressionLevel, BloscCompressor, BloscError, BloscShuffleMode,
-    BloscShuffleModeNumcodecs, blosc_compress_bytes, blosc_decompress_bytes, blosc_partial_decoder,
-    blosc_validate,
-};
+pub use blosc_codec_impl::BloscCodec;

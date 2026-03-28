@@ -43,7 +43,7 @@ const MIN_PARALLEL_LENGTH: usize = 4_000_000;
 use std::sync::Arc;
 
 
-pub use blosc::blosc_codec::BloscCodec;
+pub use blosc_codec::BloscCodec;
 use blusc::{
     blosc1_cbuffer_metainfo, blosc1_cbuffer_sizes, blosc1_cbuffer_validate, blosc1_getitem,
     blosc2_compress_ctx, blosc2_create_cctx, blosc2_create_dctx, blosc2_decompress_ctx,
@@ -95,7 +95,7 @@ impl CodecTraitsV2 for BloscCodec {
 
 #[derive(Clone, Debug, Error, From)]
 #[error("{0}")]
-struct BloscError(String);
+pub struct BloscError(String);
 
 impl From<&str> for BloscError {
     fn from(err: &str) -> Self {
@@ -103,7 +103,7 @@ impl From<&str> for BloscError {
     }
 }
 
-fn compressor_as_str(compressor: BloscCompressor) -> &'static str {
+pub fn compressor_as_str(compressor: BloscCompressor) -> &'static str {
     match compressor {
         BloscCompressor::BloscLZ => blusc::BLOSC_BLOSCLZ_COMPNAME,
         BloscCompressor::LZ4 => blusc::BLOSC_LZ4_COMPNAME,
@@ -114,7 +114,7 @@ fn compressor_as_str(compressor: BloscCompressor) -> &'static str {
     }
 }
 
-fn blosc_compress_bytes(
+pub fn blosc_compress_bytes(
     src: &[u8],
     clevel: BloscCompressionLevel,
     shuffle_mode: BloscShuffleMode,
@@ -175,14 +175,14 @@ fn blosc_compress_bytes(
     }
 }
 
-fn blosc_validate(src: &[u8]) -> Option<usize> {
+pub fn blosc_validate(src: &[u8]) -> Option<usize> {
     blosc1_cbuffer_validate(src, src.len()).ok()
 }
 
 /// # Safety
 ///
 /// Validate first
-fn blosc_typesize(src: &[u8]) -> Option<usize> {
+pub fn blosc_typesize(src: &[u8]) -> Option<usize> {
     let (typesize, _flags) = blosc1_cbuffer_metainfo(src)?;
     (typesize != 0).then_some(typesize)
 }
@@ -192,12 +192,12 @@ fn blosc_typesize(src: &[u8]) -> Option<usize> {
 /// # Safety
 ///
 /// Validate first
-fn blosc_nbytes(src: &[u8]) -> Option<usize> {
+pub fn blosc_nbytes(src: &[u8]) -> Option<usize> {
     let (uncompressed_bytes, cbytes, blocksize) = blosc1_cbuffer_sizes(src);
     (uncompressed_bytes > 0 && cbytes > 0 && blocksize > 0).then_some(uncompressed_bytes)
 }
 
-fn blosc_decompress_bytes(
+pub fn blosc_decompress_bytes(
     src: &[u8],
     destsize: usize,
     numinternalthreads: usize,
@@ -227,7 +227,7 @@ fn blosc_decompress_bytes(
     }
 }
 
-fn blosc_decompress_bytes_partial(
+pub fn blosc_decompress_bytes_partial(
     src: &[u8],
     offset: usize,
     length: usize,

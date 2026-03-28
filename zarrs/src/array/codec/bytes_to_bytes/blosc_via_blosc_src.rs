@@ -44,7 +44,6 @@ const MIN_PARALLEL_LENGTH: usize = 4_000_000;
 use std::ffi::{c_char, c_int, c_void};
 use std::sync::Arc;
 
-pub use blosc::blosc_codec::BloscCodec;
 use blosc_src::{
     BLOSC_MAX_OVERHEAD, BLOSC_MAX_THREADS, blosc_cbuffer_metainfo, blosc_cbuffer_sizes,
     blosc_cbuffer_validate, blosc_compress_ctx, blosc_decompress_ctx, blosc_getitem,
@@ -60,6 +59,7 @@ pub use zarrs_metadata_ext::codec::blosc::{
     BloscCompressionLevel, BloscCompressor, BloscShuffleMode, BloscShuffleModeNumcodecs,
 };
 use zarrs_plugin::PluginCreateError;
+use super::BloscCodec;
 
 zarrs_plugin::impl_extension_aliases!(BloscCodec, v3: "blosc", v2: "blosc");
 
@@ -91,7 +91,7 @@ impl CodecTraitsV2 for BloscCodec {
 
 #[derive(Clone, Debug, Error, From)]
 #[error("{0}")]
-struct BloscError(String);
+pub struct BloscError(String);
 
 impl From<&str> for BloscError {
     fn from(err: &str) -> Self {
@@ -99,7 +99,7 @@ impl From<&str> for BloscError {
     }
 }
 
-const fn compressor_as_cstr(compressor: BloscCompressor) -> *const u8 {
+pub(super) const fn compressor_as_cstr(compressor: BloscCompressor) -> *const u8 {
     match compressor {
         BloscCompressor::BloscLZ => blosc_src::BLOSC_BLOSCLZ_COMPNAME.as_ptr(),
         BloscCompressor::LZ4 => blosc_src::BLOSC_LZ4_COMPNAME.as_ptr(),
@@ -110,7 +110,7 @@ const fn compressor_as_cstr(compressor: BloscCompressor) -> *const u8 {
     }
 }
 
-fn blosc_compress_bytes(
+pub fn blosc_compress_bytes(
     src: &[u8],
     clevel: BloscCompressionLevel,
     shuffle_mode: BloscShuffleMode,
@@ -159,7 +159,7 @@ fn blosc_compress_bytes(
     }
 }
 
-fn blosc_validate(src: &[u8]) -> Option<usize> {
+pub fn blosc_validate(src: &[u8]) -> Option<usize> {
     let mut destsize: usize = 0;
     let valid = unsafe {
         blosc_cbuffer_validate(src.as_ptr().cast::<c_void>(), src.len(), &raw mut destsize)
@@ -170,7 +170,7 @@ fn blosc_validate(src: &[u8]) -> Option<usize> {
 /// # Safety
 ///
 /// Validate first
-fn blosc_typesize(src: &[u8]) -> Option<usize> {
+pub fn blosc_typesize(src: &[u8]) -> Option<usize> {
     let mut typesize: usize = 0;
     let mut flags: i32 = 0;
     unsafe {
@@ -188,7 +188,7 @@ fn blosc_typesize(src: &[u8]) -> Option<usize> {
 /// # Safety
 ///
 /// Validate first
-fn blosc_nbytes(src: &[u8]) -> Option<usize> {
+pub fn blosc_nbytes(src: &[u8]) -> Option<usize> {
     let mut uncompressed_bytes: usize = 0;
     let mut cbytes: usize = 0;
     let mut blocksize: usize = 0;
@@ -203,7 +203,7 @@ fn blosc_nbytes(src: &[u8]) -> Option<usize> {
     (uncompressed_bytes > 0 && cbytes > 0 && blocksize > 0).then_some(uncompressed_bytes)
 }
 
-fn blosc_decompress_bytes(
+pub fn blosc_decompress_bytes(
     src: &[u8],
     destsize: usize,
     numinternalthreads: usize,
@@ -234,7 +234,7 @@ fn blosc_decompress_bytes(
     }
 }
 
-fn blosc_decompress_bytes_partial(
+pub fn blosc_decompress_bytes_partial(
     src: &[u8],
     offset: usize,
     length: usize,

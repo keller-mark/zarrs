@@ -5,12 +5,13 @@ use blusc::{blosc2_get_complib_info, BLOSC2_MAX_OVERHEAD};
 use zarrs_metadata::Configuration;
 use zarrs_plugin::ZarrVersion;
 
-use super::{
+use super::super::{
     BloscCodecConfiguration, BloscCodecConfigurationNumcodecs, BloscCodecConfigurationV1,
     BloscCompressionLevel, BloscCompressor, BloscError, BloscShuffleMode,
-    BloscShuffleModeNumcodecs, blosc_compress_bytes, blosc_decompress_bytes, blosc_partial_decoder,
-    blosc_validate, compressor_as_str,
+    BloscShuffleModeNumcodecs, blosc_compress_bytes, blosc_decompress_bytes, blosc_validate,
+    blosc_partial_decoder,
 };
+use super::super::blosc_impl::compressor_as_str;
 use crate::array::{ArrayBytesRaw, BytesRepresentation};
 #[cfg(feature = "async")]
 use zarrs_codec::AsyncBytesPartialDecoderTraits;
