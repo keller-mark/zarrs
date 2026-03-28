@@ -62,24 +62,13 @@ use thiserror::Error;
 use zarrs_metadata::v2::MetadataV2;
 use zarrs_metadata::v3::MetadataV3;
 
-use zarrs_codec::{Codec, CodecPluginV2, CodecPluginV3, CodecTraitsV2, CodecTraitsV3};
+use zarrs_codec::{Codec, CodecTraitsV2, CodecTraitsV3};
 pub use zarrs_metadata_ext::codec::blosc::{
     BloscCodecConfiguration, BloscCodecConfigurationNumcodecs, BloscCodecConfigurationV1,
     BloscCompressionLevel, BloscCompressor, BloscShuffleMode, BloscShuffleModeNumcodecs,
 };
 use zarrs_plugin::PluginCreateError;
 
-zarrs_plugin::impl_extension_aliases!(BloscCodec, v3: "blosc", v2: "blosc");
-
-// Register the V3 codec.
-inventory::submit! {
-    CodecPluginV3::new::<BloscCodec>()
-}
-
-// Register the V2 codec.
-inventory::submit! {
-    CodecPluginV2::new::<BloscCodec>()
-}
 
 impl CodecTraitsV3 for BloscCodec {
     fn create(metadata: &MetadataV3) -> Result<Codec, PluginCreateError> {

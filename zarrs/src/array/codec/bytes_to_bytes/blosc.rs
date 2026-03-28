@@ -52,3 +52,17 @@ pub use blosc_impl::{
     BloscShuffleModeNumcodecs, blosc_compress_bytes, blosc_decompress_bytes,
     blosc_decompress_bytes_partial, blosc_nbytes, blosc_typesize, blosc_validate,
 };
+use zarrs_codec::{CodecPluginV2, CodecPluginV3};
+
+
+zarrs_plugin::impl_extension_aliases!(BloscCodec, v3: "blosc", v2: "blosc");
+
+// Register the V3 codec.
+inventory::submit! {
+    CodecPluginV3::new::<BloscCodec>()
+}
+
+// Register the V2 codec.
+inventory::submit! {
+    CodecPluginV2::new::<BloscCodec>()
+}
