@@ -47,12 +47,13 @@ use blusc::{
     BLOSC2_CPARAMS_DEFAULTS,
     BLOSC2_DPARAMS_DEFAULTS,
     BLOSC2_MAX_OVERHEAD,
+    BLOSC_MAX_THREADS,
     // For decompression
     blosc1_cbuffer_metainfo,
     blosc1_cbuffer_sizes,
     blosc1_cbuffer_validate,
     blosc1_getitem,
-    blosc2_compress_ctx,
+    blosc1_compress_ctx,
     blosc2_create_cctx,
     blosc2_create_dctx,
     blosc2_decompress_ctx,
@@ -116,23 +117,11 @@ pub fn blosc_compress_bytes(
     numinternalthreads: usize,
 ) -> Result<Vec<u8>, BloscError> {
     let numinternalthreads = if src.len() >= MIN_PARALLEL_LENGTH {
-        std::cmp::min(numinternalthreads, 100 as usize)
+        std::cmp::min(numinternalthreads, BLOSC_MAX_THREADS as usize)
     } else {
         1
     };
 
-    println!("src contents: {:?}", src);
-
-    println!(
-        "blosc_compress_bytes(src len: {}, clevel: {:?}, shuffle_mode: {:?}, typesize: {}, compressor: {:?}, blocksize: {}, numinternalthreads: {})",
-        src.len(),
-        clevel,
-        shuffle_mode,
-        typesize,
-        compressor,
-        blocksize,
-        numinternalthreads
-    );
 
     // let mut dest = vec![0; src.len() + BLOSC_MAX_OVERHEAD as usize];
     let destsize = src.len() + BLOSC2_MAX_OVERHEAD as usize;
@@ -158,7 +147,7 @@ pub fn blosc_compress_bytes(
         };
         let context = blosc2_create_cctx(cparams);
 
-        blosc2_compress_ctx(&context, src, &mut dest)
+        blosc1_compress_ctx(&context, src, &mut dest)
     };
     if destsize > 0 {
         unsafe {

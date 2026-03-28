@@ -103,7 +103,7 @@ blosc-src = { version = "0.3.6", features = ["snappy", "lz4", "zlib", "zstd"], o
 quick_cache = { version = "0.6.16" }
 uuid = { version = "^1.1.0", features = ["v4", "js"] }
 zstd = { version = "0.13.3", optional = true }
-blusc = { version = "0.0.4", features = [], optional = true }
+blusc = { version = "0.0.6", optional = true }
 
 
 
