@@ -30,7 +30,7 @@ sharding = [] # Enable the sharding codec
 transpose = ["dep:ndarray"] # Enable the transpose codec
 zfp = ["dep:zfp-sys"] # Enable the zfp codec
 zlib = ["dep:flate2"] # Enable the zlib codec
-zstd = ["dep:zstd"] # Enable the zstd codec
+zstd = ["dep:zstd", "dep:zstd-sys"] # Enable the zstd codec
 ndarray = ["dep:ndarray"] # Adds ndarray utility functions to Array
 dlpack =["dep:dlpark"] # Adds dlpack utility functions to Array
 async = ["dep:async-generic", "dep:async-trait", "dep:futures", "moka/future", "zarrs_storage/async", "zarrs_codec/async"] # Enable experimental async API
@@ -86,11 +86,11 @@ zarrs_storage.workspace = true
 # - https://github.com/kylebarron/parquet-wasm/blob/d9e9e1f0762e8a4c1c710f66550f00c3534d350f/Cargo.toml#L87C1-L92C77
 # - https://github.com/kylebarron/parquet-wasm/blob/main/DEVELOP.md#macos
 # - https://github.com/gyscos/zstd-rs/issues/93
-# zstd = { version = "*", features = [
-#     "wasm",
-#     "thin",
-# ], default-features = false, optional = true }
-# zstd-sys = { version = "=2.0.9", optional = true, default-features = false }
+zstd = { version = "*", features = [
+    "wasm",
+    "thin",
+], default-features = false, optional = true }
+zstd-sys = { version = "=2.0.9", optional = true, default-features = false }
 zfp-sys = {version = "0.4.2", features = ["static"], optional = true }
 dlpark = { version = "0.6.0", features = ["half"], optional = true }
 async-generic = { version = "1.1.2", optional = true }
@@ -106,14 +106,9 @@ base64 = "0.22.1"
 zarrs_chunk_grid.workspace = true
 zarrs_codec.workspace = true
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-zstd = { version = "0.13.3", features = ["zstdmt", "experimental"], optional = true }
-
-
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 quick_cache = { version = "0.6.16" }
 uuid = { version = "^1.1.0", features = ["v4", "js"] }
-zstd = { version = "0.13.3", optional = true }
 
 
 # Reference: https://github.com/kylebarron/parquet-wasm/blob/ad18b841a8e788b0d4b17eb9deaca581d02bf887/Cargo.toml#L100C1-L110C18
