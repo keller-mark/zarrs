@@ -54,7 +54,6 @@ pub use blosc_impl::{
 };
 use zarrs_codec::{CodecPluginV2, CodecPluginV3};
 
-
 zarrs_plugin::impl_extension_aliases!(BloscCodec, v3: "blosc", v2: "blosc");
 
 // Register the V3 codec.

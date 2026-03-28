@@ -60,8 +60,6 @@ pub use zarrs_metadata_ext::codec::blosc::{
 };
 use zarrs_plugin::PluginCreateError;
 
-
-
 impl CodecTraitsV3 for BloscCodec {
     fn create(metadata: &MetadataV3) -> Result<Codec, PluginCreateError> {
         let configuration: BloscCodecConfiguration = metadata.to_typed_configuration()?;
