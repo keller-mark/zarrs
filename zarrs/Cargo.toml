@@ -51,7 +51,7 @@ bench = false
 async-trait = { version = "0.1.74", optional = true }
 #blosc-src = { path = "../../rust-blosc-src", features = ["lz4", "zlib", "zstd"], optional = true }
 # blosc2-src = { version = "0.1.3", features = ["zstd"], optional = true }
-blusc = { path = "../../blusc", features = [], optional = true }
+blusc = { version = "0.0.3", features = [], optional = true }
 bytemuck = { version = "1.14.0", features = ["extern_crate_alloc", "must_cast", "min_const_generics"] }
 bytes = "1.7.0"
 bzip2 = { version = "0.6.0", optional = true }
