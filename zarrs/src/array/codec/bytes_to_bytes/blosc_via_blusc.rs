@@ -6,17 +6,17 @@ use std::sync::Arc;
 
 pub use super::blosc_codec::BloscCodec;
 use blusc::{
+    BLOSC_MAX_THREADS,
     // For compression
     BLOSC2_CPARAMS_DEFAULTS,
     BLOSC2_DPARAMS_DEFAULTS,
     BLOSC2_MAX_OVERHEAD,
-    BLOSC_MAX_THREADS,
     // For decompression
     blosc1_cbuffer_metainfo,
     blosc1_cbuffer_sizes,
     blosc1_cbuffer_validate,
-    blosc1_getitem,
     blosc1_compress_ctx,
+    blosc1_getitem,
     blosc2_create_cctx,
     blosc2_create_dctx,
     blosc2_decompress_ctx,
@@ -84,7 +84,6 @@ pub fn blosc_compress_bytes(
     } else {
         1
     };
-
 
     // let mut dest = vec![0; src.len() + BLOSC_MAX_OVERHEAD as usize];
     let destsize = src.len() + BLOSC2_MAX_OVERHEAD as usize;

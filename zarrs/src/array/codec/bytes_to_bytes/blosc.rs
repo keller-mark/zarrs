@@ -66,7 +66,6 @@ inventory::submit! {
     CodecPluginV2::new::<BloscCodec>()
 }
 
-
 #[cfg(test)]
 mod tests {
     use std::borrow::Cow;
