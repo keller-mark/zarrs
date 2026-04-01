@@ -164,7 +164,6 @@ pub fn blosc_decompress_bytes(
     let destsize = {
         let mut dparams = BLOSC2_DPARAMS_DEFAULTS;
         dparams.nthreads = numinternalthreads as i16;
-        // TODO: see tests in blusc and fix.
         let context = blosc2_create_dctx(dparams);
         blosc2_decompress_ctx(&context, src, &mut dest)
     };
