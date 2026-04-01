@@ -38,11 +38,11 @@ mod blosc_codec;
 mod blosc_partial_decoder;
 
 #[cfg(not(target_arch = "wasm32"))]
-#[path = "blosc_via_blosc_src.rs"]
+#[path = "blosc/blosc_via_blosc_src.rs"]
 mod blosc_impl;
 
 #[cfg(target_arch = "wasm32")]
-#[path = "blosc_via_blusc.rs"]
+#[path = "blosc/blosc_via_blusc.rs"]
 mod blosc_impl;
 
 pub use blosc_codec::BloscCodec;
