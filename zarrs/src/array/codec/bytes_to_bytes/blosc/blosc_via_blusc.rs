@@ -155,7 +155,7 @@ pub fn blosc_decompress_bytes(
     numinternalthreads: usize,
 ) -> Result<Vec<u8>, BloscError> {
     let numinternalthreads = if destsize >= MIN_PARALLEL_LENGTH {
-        std::cmp::min(numinternalthreads, 100 as usize)
+        std::cmp::min(numinternalthreads, BLOSC_MAX_THREADS as usize)
     } else {
         1
     };
